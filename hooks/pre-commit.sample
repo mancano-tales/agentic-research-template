@@ -3,6 +3,12 @@
 # pre-commit.sample — Hook de Validação de Governança Humano-IA
 # ==============================================================================
 
+# O Git Bash exporta LC_CTYPE=C.UTF-8, que o R do Windows não aceita ("Setting
+# LC_CTYPE=C.UTF-8 failed") e faz o matching UTF-8 do validador falhar
+# silenciosamente (0 planos localizados no índice). Limpar o locale para o R
+# usar o padrão do sistema.
+unset LC_ALL LC_CTYPE LANG
+
 # Executar validador de consistência antes do commit
 Rscript tools/validate-governance.R
 exit $?
