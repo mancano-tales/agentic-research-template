@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# post-merge.sample — Restaurador de Links de Governança
+# ==============================================================================
+
+# Re-executar setup após pull/merge para restaurar links quebrados
+if [ -f setup.sh ]; then
+    ./setup.sh
+fi

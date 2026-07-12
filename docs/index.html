@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Covenant — Manual de Governança Humano-IA</title>
+    <meta name="description" content="Aprenda a estruturar, auditar e proteger seu repositório contra a deriva cognitiva e erros de commits de agentes de IA.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ── CONFIGURAÇÕES GERAIS E PALETA DE CORES (HSL) ────────────────────────── */
+        :root {
+            --bg-base: 240 10% 4%;         /* Dark Midnight background */
+            --bg-card: 240 8% 8%;          /* Ligeiramente mais claro para cards */
+            --border-color: 240 6% 15%;    /* Cor sutil de bordas */
+            --primary: 260 85% 65%;        /* Eletric Purple */
+            --secondary: 180 80% 50%;      /* Cyan */
+            --accent: 330 90% 60%;         /* Pink/Magenta highlight */
+            --text-main: 0 0% 92%;         /* Off-white */
+            --text-muted: 240 5% 65%;      /* Grey text */
+            
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: hsl(var(--bg-base));
+            color: hsl(var(--text-main));
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+        }
+
+        /* ── GLASSMORPHISM & GRADIENTS UTILITIES ───────────────────────────────── */
+        .glass-card {
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: hsla(var(--primary), 0.3);
+            box-shadow: 0 12px 30px rgba(120, 80, 255, 0.1);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: hsla(var(--primary), 0.15);
+            color: hsl(var(--primary));
+            border: 1px solid hsla(var(--primary), 0.3);
+            margin-bottom: 1rem;
+        }
+
+        /* ── SIDEBAR NAVIGATION ───────────────────────────────────────────────── */
+        aside {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: hsl(var(--bg-card));
+            border-right: 1px solid hsl(var(--border-color));
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: black;
+        }
+
+        .logo-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            color: hsl(var(--text-muted));
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        nav a:hover, nav li.active a {
+            color: hsl(var(--text-main));
+            background: hsla(var(--primary), 0.08);
+            border-left: 3px solid hsl(var(--primary));
+            padding-left: calc(1rem - 3px);
+        }
+
+        /* ── MAIN CONTENT AREA ────────────────────────────────────────────────── */
+        main {
+            margin-left: var(--sidebar-width);
+            padding: 4rem 5% 4rem 5%;
+            width: calc(100vw - var(--sidebar-width));
+            max-width: 1200px;
+        }
+
+        section {
+            margin-bottom: 5rem;
+            scroll-margin-top: 4rem;
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 { font-size: 2.8rem; line-height: 1.2; }
+        h2 { font-size: 2rem; margin-top: 2rem; border-bottom: 1px solid hsl(var(--border-color)); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.3rem; margin-top: 1.5rem; color: hsl(var(--secondary)); }
+
+        p {
+            color: hsl(var(--text-muted));
+            margin-bottom: 1.25rem;
+            font-size: 1.05rem;
+        }
+
+        strong {
+            color: hsl(var(--text-main));
+        }
+
+        /* ── CODE BLOCK & COPIER ──────────────────────────────────────────────── */
+        .code-container {
+            position: relative;
+            background: #0d0d12;
+            border: 1px solid hsl(var(--border-color));
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            overflow-x: auto;
+        }
+
+        .code-container code {
+            color: #d1d1e0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: hsl(var(--text-muted));
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: hsla(var(--primary), 0.15);
+            color: hsl(var(--text-main));
+        }
+
+        /* ── MOCK PLAYBOOK INTERACTIVO (SIMULADOR DE GIT HOOK) ─────────────────── */
+        .sim-container {
+            background: #0d0d12;
+            border: 1px solid hsl(var(--border-color));
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+
+        .sim-header {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid hsl(var(--border-color));
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sim-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-red { background-color: #ff5f56; }
+        .dot-yellow { background-color: #ffbd2e; }
+        .dot-green { background-color: #27c93f; }
+
+        .sim-title {
+            font-size: 0.85rem;
+            color: hsl(var(--text-muted));
+            font-family: var(--font-mono);
+        }
+
+        .sim-body {
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            min-height: 250px;
+            color: #39ff14; /* Matrix neon green */
+            background-color: #050508;
+            font-size: 0.9rem;
+            overflow-y: auto;
+        }
+
+        .sim-controls {
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid hsl(var(--border-color));
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .sim-btn {
+            background: hsl(var(--bg-card));
+            border: 1px solid hsl(var(--border-color));
+            color: hsl(var(--text-main));
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .sim-btn:hover {
+            border-color: hsl(var(--primary));
+            background: hsla(var(--primary), 0.1);
+        }
+
+        /* ── RESPONSIVIDADE ──────────────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+            aside {
+                position: relative;
+                width: 100vw;
+                border-right: none;
+                border-bottom: 1px solid hsl(var(--border-color));
+                padding: 1.5rem;
+            }
+            .logo-container {
+                margin-bottom: 1.5rem;
+            }
+            main {
+                margin-left: 0;
+                width: 100vw;
+                padding: 2rem 1.5rem;
+            }
+            h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── BARRA LATERAL DE NAVEGAÇÃO ── -->
+    <aside>
+        <div class="logo-container">
+            <div class="logo-icon">🤝</div>
+            <div class="logo-title">Agent Covenant</div>
+        </div>
+        <nav>
+            <ul>
+                <li class="active"><a href="#introducao">🚀 Introdução</a></li>
+                <li><a href="#arquitetura">🧱 Arquitetura</a></li>
+                <li><a href="#quickstart">⚡ Quick Start</a></li>
+                <li><a href="#comandos">🛠️ Ferramentas</a></li>
+                <li><a href="#playbook">🎮 Simulador</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- ── CONTEÚDO PRINCIPAL ── -->
+    <main>
+        
+        <!-- INTRODUÇÃO -->
+        <section id="introducao">
+            <span class="badge">Estágio de Validação: Produção</span>
+            <h1>Governança e Alinhamento Atômico <br><span class="text-gradient">Humano-IA</span></h1>
+            <p style="margin-top: 1.5rem; font-size: 1.2rem; color: hsl(var(--text-main));">
+                O <strong>Agent Covenant</strong> é um framework de diretrizes, hooks e scripts projetados para alinhar agentes inteligentes (Cursor, Claude, Copilot) e manter a consistência de código e documentação.
+            </p>
+            <p>
+                Quando trabalhamos com múltiplos agentes de IA de forma paralela em um mesmo repositório, o contexto pode se degradar rapidamente. Mudanças destrutivas e commits sem rastreabilidade humana causam entropia no histórico. Este template introduz rituais de auditoria local de commits e autorregeneração estrutural de links de agentes.
+            </p>
+            
+            <div class="glass-card">
+                <h3>Por que utilizar este modelo?</h3>
+                <p style="margin-top: 0.5rem;">
+                    💡 <strong>Evita conflito de instruções:</strong> Seus agentes leem exatamente o mesmo arquivo de contexto ao mesmo tempo.<br>
+                    🛡️ <strong>Pre-commit rigoroso:</strong> Previne commits acidentais sem atualizações de changelogs ou planos de trabalho.<br>
+                    🔄 <strong>Autocorreção de links:</strong> Resolve quebras silenciosas provocadas por salvamento atômico de editores gráficos.
+                </p>
+            </div>
+        </section>
+
+        <!-- ARQUITETURA -->
+        <section id="arquitetura">
+            <h2>🧱 A Estrutura de Governança</h2>
+            <p>
+                O sistema é ancorado sobre três diretrizes operacionais fundamentais:
+            </p>
+            
+            <h3>1. Fonte Única de Verdade (Contexto Canônico)</h3>
+            <p>
+                O arquivo <code>CLAUDE.md</code> na raiz do projeto é a fonte absoluta de instruções. Para garantir compatibilidade cruzada, o setup cria hard links físicos (<code>AGENTS.md</code> e <code>.github/copilot-instructions.md</code>) e uma junção NTFS (<code>.agents/</code> apontando para <code>.claude/</code>). Isso garante que o Claude CLI, o Copilot e o Antigravity compartilhem a mesma memória em tempo real.
+            </p>
+
+            <h3>2. Roteiro de Planos YAML</h3>
+            <p>
+                Cada tarefa complexa exige a criação de um plano sob <code>9-vers/plan/</code> com cabeçalho YAML delimitando:
+            </p>
+            <div class="code-container">
+<pre><code>---
+tipo: Plano
+titulo: "Correção da Barreira de Renda"
+status: ATIVO
+criado: 2026-07-11
+concluido: null
+agentes:
+  orquestrador: "Claude Fable 5 (Claude Code)"
+---</code></pre>
+            </div>
+
+            <h3>3. Commit Sincronizado (Co-committing)</h3>
+            <p>
+                Nenhuma linha de código ou texto entra no Git sem um registro associado no arquivo <code>NEWS.md</code>. O pre-commit hook bloqueia o commit caso arquivos de lógica tenham sido staged sem a devida atualização do changelog histórico.
+            </p>
+        </section>
+
+        <!-- QUICK START -->
+        <section id="quickstart">
+            <h2>⚡ Quick Start</h2>
+            <p>Instanciar o template em seu ambiente de trabalho leva menos de um minuto:</p>
+            
+            <ol style="margin-left: 1.5rem; color: hsl(var(--text-muted)); display: flex; flex-direction: column; gap: 1rem;">
+                <li>
+                    <strong>1. Copie o template:</strong> Copie os arquivos da pasta do template para o diretório raiz do seu novo projeto.
+                </li>
+                <li>
+                    <strong>2. Execute o script de Setup:</strong> Abra o terminal na raiz do projeto e execute o script correspondente ao seu sistema operacional:
+                    <div class="code-container">
+                        <button class="copy-btn" onclick="copyText('powershell-setup')">Copiar</button>
+                        <code id="powershell-setup"># No Windows (PowerShell como Administrador ou Modo Desenvolvedor):<br>.\setup.ps1</code>
+                    </div>
+                    <div class="code-container">
+                        <button class="copy-btn" onclick="copyText('bash-setup')">Copiar</button>
+                        <code id="bash-setup"># No Linux / macOS (Terminal):<br>chmod +x setup.sh<br>./setup.sh</code>
+                    </div>
+                </li>
+                <li>
+                    <strong>3. Ative os Git Hooks:</strong> Copie os hooks da pasta <code>hooks/</code> para a pasta oculta do Git:
+                    <div class="code-container">
+                        <button class="copy-btn" onclick="copyText('hooks-setup')">Copiar</button>
+                        <code id="hooks-setup">cp hooks/pre-commit.sample .git/hooks/pre-commit<br>chmod +x .git/hooks/pre-commit</code>
+                    </div>
+                </li>
+            </ol>
+        </section>
+
+        <!-- COMANDOS E FERRAMENTAS -->
+        <section id="comandos">
+            <h2>🛠️ Ferramentas & Console</h2>
+            <p>O ecossistema é mantido por dois utilitários programáticos nativos em R (Base R):</p>
+            
+            <h3>Validador de Consistência (validate-governance.R)</h3>
+            <p>
+                Audita e sincroniza o ecossistema. Ele possui dois modos:
+            </p>
+            <p>
+                <code>Rscript tools/validate-governance.R</code>: Valida o padrão de nomenclatura, checa conflitos de merge e garante que planos concluídos possuam logs salvos no inventário.
+            </p>
+            <p>
+                <code>Rscript tools/validate-governance.R --sync</code>: Reconstrói dinamicamente a tabela do índice <code>plan/README.md</code>, injetando as modificações cirurgicamente entre os delimitadores de tags.
+            </p>
+
+            <h3>Exportador de Conversas (export_conversa.R)</h3>
+            <p>
+                Cria logs autárquicos em Markdown a partir do histórico JSONL das IAs:
+            </p>
+            <div class="code-container">
+                <code style="color: #66ff66;">Rscript tools/export_conversa.R &lt;session_uuid&gt; [slug-do-capitulo]</code>
+            </div>
+        </section>
+
+        <!-- SIMULADOR INTERATIVO -->
+        <section id="playbook">
+            <h2>🎮 Simulador de Governança (Pre-Commit Sandbox)</h2>
+            <p>
+                Teste as regras de governança abaixo para simular como os Git Hooks reagem às ações no repositório.
+            </p>
+            
+            <div class="sim-container">
+                <div class="sim-header">
+                    <span class="sim-dot dot-red"></span>
+                    <span class="sim-dot dot-yellow"></span>
+                    <span class="sim-dot dot-green"></span>
+                    <span class="sim-title">Console — Git Hook Simulator (v1.0.0)</span>
+                </div>
+                <div class="sim-body" id="console-output">
+                    $ git status<br>
+                    - Modificado: 4-DA-Code/analise.R<br>
+                    - Modificado: 9-vers/plan/2026-07-11_Plano_Melhorias.md<br>
+                    <br>
+                    Pronto para simular. Escolha uma ação abaixo...
+                </div>
+                <div class="sim-controls">
+                    <button class="sim-btn" onclick="runSim('correto')">Comitar Correto (NEWS + Código)</button>
+                    <button class="sim-btn" onclick="runSim('sem-news')">Comitar Sem Atualizar NEWS.md</button>
+                    <button class="sim-btn" onclick="runSim('conflito')">Comitar Com Conflito de Merge</button>
+                    <button class="sim-btn" onclick="runSim('auto-healing')">Simular Quebra de Hard Link (Atomic Save)</button>
+                    <button class="sim-btn" onclick="clearConsole()" style="background: rgba(255,50,50,0.1); border-color: rgba(255,50,50,0.3);">Limpar</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ── LÓGICA DO SIMULADOR ── -->
+    <script>
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText.replace(/<br>/g, '\n');
+            navigator.clipboard.writeText(text);
+            alert("Copiado para a área de transferência!");
+        }
+
+        const consoleEl = document.getElementById("console-output");
+
+        function printConsole(text, delay = 0) {
+            setTimeout(() => {
+                consoleEl.innerHTML += "<br>" + text;
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }, delay);
+        }
+
+        function clearConsole() {
+            consoleEl.innerHTML = "$ console cleared...";
+        }
+
+        function runSim(type) {
+            clearConsole();
+            if (type === 'correto') {
+                printConsole("$ git commit -m 'feat(analysis): refactor plots and update news'", 100);
+                printConsole("ℹ Rscript tools/validate-governance.R executado via pre-commit...", 400);
+                printConsole("ℹ Localizados 12 planos indexados. Sincronia íntegra.", 800);
+                printConsole("✅ Auditoria concluída com sucesso!", 1200);
+                printConsole("<span style='color: #27c93f;'>[main 8c23a12] feat(analysis): refactor plots and update news (Commit Aceito)</span>", 1600);
+            } 
+            else if (type === 'sem-news') {
+                printConsole("$ git commit -m 'feat(analysis): edit script logic'", 100);
+                printConsole("ℹ Rscript tools/validate-governance.R executado via pre-commit...", 400);
+                printConsole("<span style='color: #ff5f56;'>❌ Erro: Alterações detectadas em scripts lógicos sem modificação no NEWS.md.</span>", 800);
+                printConsole("<span style='color: #ffbd2e;'>⚠ O commit deve ser sincronizado com a narrativa de modificações de contexto.</span>", 1200);
+                printConsole("<span style='color: #ff5f56;'>Abortando commit (Exit Code 1)</span>", 1600);
+            }
+            else if (type === 'conflito') {
+                printConsole("$ git commit -m 'resolve conflict'", 100);
+                printConsole("ℹ Rscript tools/validate-governance.R executado...", 400);
+                printConsole("<span style='color: #ff5f56;'>❌ Conflitos de merge NÃO RESOLVIDOS detectados em plan/README.md.</span>", 800);
+                printConsole("  Procure pelos marcadores de conflito (<<<<<<<), resolva e remova antes de comitar.", 1200);
+                printConsole("<span style='color: #ff5f56;'>Abortando commit (Exit Code 1)</span>", 1600);
+            }
+            else if (type === 'auto-healing') {
+                printConsole("ℹ Simulando salvamento atômico do VS Code quebrando hard link físico...", 100);
+                printConsole("$ Rscript tools/validate-governance.R", 450);
+                printConsole("<span style='color: #ffbd2e;'>⚠ Divergência detectada entre CLAUDE.md e AGENTS.md (link quebrado).</span>", 800);
+                printConsole("ℹ Comparando timestamps... CLAUDE.md é mais recente.", 1250);
+                printConsole("✅ Criando backup versionado em AGENTS.md.bak.20260712-232800", 1600);
+                printConsole("✅ Sincronizando e recriando link físico NTFS (mklink /h)...", 2000);
+                printConsole("<span style='color: #39ff14;'>✅ Link restaurado com sucesso! Repositório íntegro.</span>", 2400);
+            }
+        }
+
+        // Highlight active link on scroll
+        const sections = document.querySelectorAll("section");
+        const navLi = document.querySelectorAll("nav ul li");
+        window.addEventListener("scroll", () => {
+            let current = "";
+            sections.forEach((section) => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 120) {
+                    current = section.getAttribute("id");
+                }
+            });
+
+            navLi.forEach((li) => {
+                li.classList.remove("active");
+                if (li.querySelector("a").getAttribute("href").substring(1) === current) {
+                    li.classList.add("active");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

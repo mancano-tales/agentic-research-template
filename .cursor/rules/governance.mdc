@@ -1,0 +1,24 @@
+---
+description: Forçar regras rígidas de governança, auditoria de conversas e planos atômicos
+globs: 9-vers/plan/**/*.md, 9-vers/llm-reviews/**/*.md, NEWS.md, CLAUDE.md
+alwaysApply: true
+---
+
+# Regras de Governança e Planos de IA (mancano-project-template)
+
+Este repositório impõe um controle rígido sobre o trabalho de agentes de IA para garantir a integridade analítica e evitar a deriva cognitiva.
+
+## 1. Ciclo de Vida de Planos
+*   Antes de realizar alterações complexas de código ou texto, certifique-se de que há um plano com status `ATIVO` ou `EM EXECUÇÃO` sob `9-vers/plan/`.
+*   O status do plano no cabeçalho YAML do arquivo correspondente deve sempre bater com a célula correspondente no índice [plan/README.md](9-vers/plan/README.md).
+*   Se você atualizar um plano para `CONCLUÍDO`, insira a data atual no YAML (`concluido: YYYY-MM-DD`).
+
+## 2. Commit Sincronizado (Co-committing)
+*   **Staging cirúrgico**: Adicione apenas os arquivos trabalhados (`git add <file>`). NUNCA execute `git add .` para não poluir commits.
+*   Toda entrega de código/texto final de plano deve vir no **mesmo commit** que a atualização do [NEWS.md](NEWS.md).
+*   O log em `NEWS.md` deve obrigatoriamente incluir a data e hora local, o modelo, a plataforma, e a mensagem do commit, sob o título `**Metadados de Execução**`.
+
+## 3. Export de Conversa e Auditoria
+*   Ao fechar um plano concluído, você deve rodar o script utilitário em R para exportar a conversa:
+    *   `Rscript tools/export_conversa.R <session_uuid> [slug]`
+*   O arquivo gerado em `9-vers/llm-reviews/` deve ser cadastrado no inventário em [llm-reviews/README.md](9-vers/llm-reviews/README.md).

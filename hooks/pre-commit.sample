@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# pre-commit.sample — Hook de Validação de Governança Humano-IA
+# ==============================================================================
+
+# Executar validador de consistência antes do commit
+Rscript tools/validate-governance.R
+exit $?

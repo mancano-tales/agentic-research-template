@@ -1,0 +1,45 @@
+# ==============================================================================
+# .gitignore — Template de Governança Humano-IA
+# ==============================================================================
+
+# Ignorar o atalho local das IAs para evitar rastreamento duplicado
+/.agents/
+
+# Sistema Operacional / Editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.obsidian/
+.vscode/
+*~
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rout
+
+# Backups temporários gerados por auto-sincronização
+*.bak.*
+
