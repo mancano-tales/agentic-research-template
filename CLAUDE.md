@@ -1,6 +1,10 @@
 # CLAUDE.md — [NOME DO SEU PROJETO]
 
-> **Este arquivo é para assistentes IA** (especialmente Claude/Anthropic e Gemini/Antigravity). Contém o contexto operacional, regras do repositório, tecnologia ativa e convenções. Para convenções de agentes gerais, ver [AGENTS.md](AGENTS.md). Para o mapa de pastas, ver [GUIDANCE.md](GUIDANCE.md).
+> 🚨 **CRITICAL AGENT RULES (COVENANT) — READ FIRST:**
+> - **RULE 1:** You are operating under the **Agent Covenant** framework. Every commit is audited. Run `Rscript tools/validate-governance.R` to test your edits before committing.
+> - **RULE 2:** Any modification in the main source directories REQUIRES an update in the root `NEWS.md` file.
+> - **RULE 3:** When completing a task or plan, you MUST run the conversation exporter to save your session log.
+> - **For humans:** this file is for AI operating context. See [GUIDANCE.md](GUIDANCE.md) for the sitemap.
 
 ---
 
