@@ -395,6 +395,268 @@ if (should_sync) {
   quit(status = 0)
 }
 
+# ── T0. Helpers de Git para os Guardas de Commit (T1-T4) ──────────────────────
+# Todas as chamadas usam system2() com vetor de argumentos (nunca system()/
+# shell() com string concatenada) para que nomes de arquivo com espaço/acento
+# cheguem ao git corretamente, independente de quoting de shell.
+GIT_BASE_ARGS <- c("-c", "core.quotepath=false")
+
+git_capture <- function(args) {
+  result <- suppressWarnings(tryCatch(
+    system2("git", c(GIT_BASE_ARGS, args), stdout = TRUE, stderr = TRUE),
+    error = function(e) character(0)
+  ))
+  status <- attr(result, "status")
+  if (!is.null(status) && status != 0) {
+    cat_warn(sprintf("git %s retornou status %s: %s",
+                      paste(args, collapse = " "), status, paste(result, collapse = " | ")))
+    return(character(0))
+  }
+  Encoding(result) <- "UTF-8"
+  result
+}
+
+# Arquivos staged para ESTE commit (Added/Copied/Modified/Renamed; Deleted não faz
+# sentido escanear).
+staged_files <- git_capture(c("diff", "--cached", "--name-only", "--diff-filter=ACMR"))
+staged_files <- staged_files[nzchar(staged_files)]
+
+# Tamanho do BLOB staged (não do arquivo em disco): reflete corretamente um
+# `git add -p` parcial. ls-files -> sha -> cat-file -s em vez do atalho
+# ":caminho" porque ":" inicia "magic pathspec" no git.
+get_staged_blob_size <- function(filepath) {
+  ls_out <- git_capture(c("ls-files", "-s", "--", filepath))
+  if (length(ls_out) == 0) return(NA_real_)
+  sha <- sub("^\\S+\\s+(\\S+)\\s+\\S+\\t.*$", "\\1", ls_out[1])
+  if (!grepl("^[0-9a-f]{40}$|^[0-9a-f]{64}$", sha)) return(NA_real_)
+  size_out <- git_capture(c("cat-file", "-s", sha))
+  if (length(size_out) == 0) return(NA_real_)
+  suppressWarnings(as.numeric(size_out[1]))
+}
+
+# Linhas efetivamente ADICIONADAS pelo diff staged (sem prefixo "+", sem
+# contexto -U0). Por construção, git diff -U0 nunca devolve linhas
+# inalteradas/pré-existentes — checagens de conteúdo baseadas nesta função
+# não podem travar retroativamente por causa de algo que já estava no
+# arquivo antes deste commit.
+get_staged_added_lines <- function(filepath) {
+  diff_out <- git_capture(c("diff", "--cached", "--no-color", "-U0", "--", filepath))
+  if (length(diff_out) == 0) return(character(0))
+  added <- diff_out[grepl("^\\+", diff_out) & !grepl("^\\+\\+\\+", diff_out)]
+  sub("^\\+", "", added)
+}
+
+# ── T2. Bloqueio de Arquivos Staged Grandes (> 10 MB) ─────────────────────────
+# Protege contra upload acidental de dados brutos/scraping não anonimizados
+# para o histórico do Git (o repo já tem tools/git-purgar-dados-historico.ps1
+# — sinal de que esse problema já aconteceu aqui antes).
+MAX_STAGED_BYTES <- 10485760  # 10 * 1024 * 1024
+
+if (length(staged_files) > 0) {
+  cat_info(sprintf("Verificando tamanho de %d arquivo(s) staged (limite: %d bytes)...",
+                    length(staged_files), MAX_STAGED_BYTES))
+  for (f in staged_files) {
+    blob_size <- get_staged_blob_size(f)
+    if (is.na(blob_size)) {
+      cat_warn(sprintf("Não foi possível determinar o tamanho staged de '%s'. Pulando.", f))
+      next
+    }
+    if (blob_size > MAX_STAGED_BYTES) {
+      cat_error(sprintf("Arquivo staged '%s' excede o limite de %d bytes (tamanho: %d bytes / %.2f MB).",
+                        f, MAX_STAGED_BYTES, blob_size, blob_size / 1048576))
+      errors_found <- TRUE
+    }
+  }
+}
+
+# ── T1. Caminhos Absolutos Locais em .R/.qmd Staged ────────────────────────────
+# Escopo: só linhas ADICIONADAS pelo diff staged (não o arquivo inteiro).
+# Escanear o arquivo inteiro bloquearia retroativamente ~161 arquivos hoje
+# trackeados (a maioria scripts em 4-DA-Code/ com setwd()/read.csv() de
+# caminho absoluto, prática normal de workflow de um único pesquisador) e,
+# especificamente, capítulos com "bibliography: C:/Users/.../Zotero-....bib"
+# pré-existente no frontmatter — um lockout permanente e real, não hipotético.
+ABS_PATH_REGEX <- r"{([A-Za-z]:[\\/]Users[\\/]|[\\/][Hh]ome[\\/]|[\\/][Uu]sers[\\/])[A-Za-z0-9_-]+}"
+
+# Exceção auto-referencial: tools/validate-governance.R contém, no próprio
+# código-fonte, a string literal "MancanoSync/" (o termo que esta mesma
+# checagem procura) e comentários citando "C:/Users/..." como exemplo — sem
+# essa exceção, QUALQUER edição futura a este bloco se autodenunciaria como
+# violação (confirmado ao vivo: aconteceu na primeira tentativa de commit
+# desta implementação). Confirmado por grep que o arquivo não contém nenhum
+# caminho absoluto real fora desses dois casos.
+rq_files <- staged_files[grepl("\\.(R|qmd)$", staged_files, ignore.case = TRUE) &
+                          staged_files != "tools/validate-governance.R"]
+
+if (length(rq_files) > 0) {
+  cat_info(sprintf("Verificando caminhos absolutos locais em %d arquivo(s) .R/.qmd staged (linhas adicionadas)...",
+                    length(rq_files)))
+  for (f in rq_files) {
+    added_lines <- get_staged_added_lines(f)
+    if (length(added_lines) == 0) next
+    hits <- grepl(ABS_PATH_REGEX, added_lines) | grepl("MancanoSync/", added_lines, fixed = TRUE)
+    if (any(hits)) {
+      offenders <- trimws(added_lines[hits])
+      for (o in head(offenders, 5)) {
+        cat_error(sprintf("Caminho absoluto local introduzido em '%s': %s", f, o))
+      }
+      if (length(offenders) > 5) {
+        cat_error(sprintf("... e mais %d linha(s) com o mesmo problema em '%s'.", length(offenders) - 5, f))
+      }
+      errors_found <- TRUE
+    }
+  }
+}
+
+# ── T4. Integridade de Citações vs. Biblioteca Zotero (.bib) ──────────────────
+# Fonte do caminho do .bib: lida de _quarto.yml (campo "bibliography:"), não
+# hardcodada de novo aqui — o nome do arquivo carrega a data do último export
+# Zotero e é reexportado periodicamente; hardcodar de novo faria esta
+# checagem degradar em silêncio na próxima reexportação.
+PATH_QUARTO_YML <- file.path(CWD, "_quarto.yml")
+resolve_bib_path <- function() {
+  fallback <- file.path(CWD, "2-set", "Zotero-Library-cr-2026-06-08.bib")
+  if (!file.exists(PATH_QUARTO_YML)) return(fallback)
+  qy_lines <- readLines(PATH_QUARTO_YML, encoding = "UTF-8", warn = FALSE)
+  bib_line <- grep("^bibliography:\\s*", qy_lines, value = TRUE)
+  if (length(bib_line) == 0) return(fallback)
+  bib_rel <- gsub("^[\"']|[\"']$", "", trimws(sub("^bibliography:\\s*", "", bib_line[1])))
+  if (nchar(bib_rel) == 0) return(fallback)
+  file.path(CWD, bib_rel)
+}
+PATH_BIB <- resolve_bib_path()
+
+QUARTO_XREF_PREFIXES <- c("sec-", "fig-", "tbl-")
+
+# Fronteira de citação Pandoc: "@" só conta como citação quando NÃO é
+# precedido por barra invertida (macro LaTeX crua, ex.: \@title), chave de
+# abertura "{" (ex.: \@ifundefined{@subtitle}) ou letra/dígito/underscore.
+# Requer os DOIS backslashes na classe de caracteres: um só é consumido como
+# escape do "{" seguinte e a exclusão de "\@title" etc. não funciona.
+CITATION_REGEX <- r"{(?<![\\{A-Za-z0-9_])@([A-Za-z0-9_:.#$%&+?<>~/-]+)}"
+
+if (!file.exists(PATH_BIB)) {
+  cat_warn(sprintf("Arquivo de bibliografia não encontrado em '%s'. Checagem T4 pulada.", PATH_BIB))
+} else {
+  bib_lines <- readLines(PATH_BIB, encoding = "UTF-8", warn = FALSE)
+  key_matches <- regmatches(bib_lines, regexec("^@[A-Za-z]+\\{([^,]+),", bib_lines))
+  valid_bib_keys <- unique(vapply(key_matches, function(m) if (length(m) >= 2) m[2] else NA_character_, character(1)))
+  valid_bib_keys <- valid_bib_keys[!is.na(valid_bib_keys)]
+  cat_info(sprintf("Carregadas %d chaves de citação de '%s'.", length(valid_bib_keys), basename(PATH_BIB)))
+
+  # Chaves reais do .bib contêm "." e ":" (ex.: "BontempiJr.-Boto2014",
+  # "Chalhoub03:00:00+00:00"), então a classe de caracteres da chave não pode
+  # excluir esses caracteres — mas isso faz a regex engolir pontuação de
+  # fronteira de prosa (ponto final de frase, dois-pontos de locator). Se a
+  # chave inteira não bate, apara "." / ":" à direita e tenta de novo.
+  resolve_key <- function(candidate) {
+    trial <- candidate
+    repeat {
+      if (trial %in% valid_bib_keys) return(TRUE)
+      if (nchar(trial) == 0 || !grepl("[.:]$", trial)) return(FALSE)
+      trial <- substr(trial, 1, nchar(trial) - 1)
+    }
+  }
+
+  # Escopo: só .qmd, não .R. Comentários roxygen2 (#' @param, @export) usam a
+  # mesma sintaxe "@palavra" em posição de fronteira de citação e gerariam
+  # falso-positivo garantido (não há roxygen no repo hoje, mas é risco
+  # latente dado o pacote educabr2 referenciado em _quarto.yml).
+  citation_files <- staged_files[grepl("\\.qmd$", staged_files, ignore.case = TRUE)]
+
+  if (length(citation_files) > 0) {
+    cat_info(sprintf("Verificando integridade de citações em %d arquivo(s) .qmd staged (linhas adicionadas)...",
+                      length(citation_files)))
+    for (f in citation_files) {
+      added_lines <- get_staged_added_lines(f)
+      if (length(added_lines) == 0) next
+
+      bad_keys_in_file <- character(0)
+      for (line in added_lines) {
+        found <- regmatches(line, gregexpr(CITATION_REGEX, line, perl = TRUE))[[1]]
+        if (length(found) == 0) next
+        keys <- sub("^@", "", found)
+        keys <- keys[!grepl(paste0("^(", paste(QUARTO_XREF_PREFIXES, collapse = "|"), ")"), keys)]
+        if (length(keys) == 0) next
+        unresolved <- keys[!vapply(keys, resolve_key, logical(1))]
+        # Ignorar chaves não resolvidas que sejam puramente numéricas ou decimais (evita falsos-positivos de comentários)
+        unresolved <- unresolved[!grepl("^[0-9.]+$", unresolved)]
+        bad_keys_in_file <- c(bad_keys_in_file, unresolved)
+      }
+
+      bad_keys_in_file <- unique(bad_keys_in_file)
+      if (length(bad_keys_in_file) > 0) {
+        cat_error(sprintf("Citação(ões) sem entrada em '%s' no arquivo '%s': %s",
+                          basename(PATH_BIB), f, paste(bad_keys_in_file, collapse = ", ")))
+        errors_found <- TRUE
+      }
+    }
+  }
+}
+
+# ── T3. Verificação de Formatação de .R Staged com {styler} ───────────────────
+# Modo conservador (dry-run + aviso): NÃO escreve nem re-adiciona
+# automaticamente. Scripts .R aqui são análise de dados versionada por
+# timestamp no nome do arquivo, editados lado a lado com prosa de capítulos;
+# misturar reformatação automática com edição de conteúdo no mesmo commit
+# degrada git blame/bisect (README §8.4). Para trocar para o modo automático
+# (auto-estiliza + re-adiciona silenciosamente), troque AUTO_STYLE_FIX para
+# TRUE.
+AUTO_STYLE_FIX <- FALSE
+
+has_styler <- requireNamespace("styler", quietly = TRUE)
+if (!has_styler) {
+  cat_warn("Pacote R 'styler' não está instalado. Checagem de formatação (T3) pulada.")
+  cat_info("Para habilitar, instale com install.packages('styler').")
+} else {
+  # Só .R puro — styler não tokeniza .qmd (prosa + chunks) de forma segura o
+  # bastante para reescrever no lugar; escopo intencionalmente restrito.
+  style_targets <- staged_files[grepl("\\.R$", staged_files, ignore.case = TRUE)]
+
+  if (length(style_targets) > 0) {
+    cat_info(sprintf("Verificando formatação de %d arquivo(s) .R staged com styler...", length(style_targets)))
+    needs_style <- character(0)
+
+    for (f in style_targets) {
+      full_path <- file.path(CWD, f)
+      if (!file.exists(full_path)) next
+
+      # style_file() devolve (de forma invisível) um data.frame com a coluna
+      # lógica `changed` — inclusive em dry="on", onde NADA é escrito em
+      # disco. Comparar hash antes/depois NÃO funciona para detectar
+      # "precisaria mudar" no modo dry: como o arquivo nunca é escrito, o
+      # hash é sempre idêntico e o aviso nunca dispararia (bug encontrado e
+      # corrigido durante os testes desta implementação).
+      dry_mode <- if (AUTO_STYLE_FIX) "off" else "on"
+      style_result <- tryCatch({
+        styler::style_file(full_path, dry = dry_mode)
+      }, error = function(e) {
+        cat_warn(sprintf("styler falhou em '%s': %s", f, conditionMessage(e)))
+        NULL
+      })
+      if (is.null(style_result)) next
+
+      changed <- isTRUE(style_result$changed[1])
+
+      if (AUTO_STYLE_FIX) {
+        if (changed) {
+          git_capture(c("add", "--", f))
+          cat_success(sprintf("Arquivo '%s' reformatado por styler e re-adicionado ao stage.", f))
+        }
+      } else if (changed) {
+        needs_style <- c(needs_style, f)
+      }
+    }
+
+    if (!AUTO_STYLE_FIX && length(needs_style) > 0) {
+      cat_warn(sprintf("%d arquivo(s) .R staged não seguem o estilo do {styler}:", length(needs_style)))
+      for (f in needs_style) cat_warn(sprintf("  - %s", f))
+      cat_info("Rode styler::style_file() manualmente e refaça o `git add` (recomendado: commit de estilo isolado).")
+      # Aviso, não bloqueio: NÃO seta errors_found <- TRUE.
+    }
+  }
+}
+
 # ── MODO VALIDATE: Execução Normal do QA ──────────────────────────────────────
 plan_index_lines <- readLines(PATH_PLAN_INDEX, encoding = "UTF-8", warn = FALSE)
 
