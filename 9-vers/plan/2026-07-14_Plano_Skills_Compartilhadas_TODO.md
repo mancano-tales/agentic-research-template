@@ -3,7 +3,7 @@ tipo: Plano
 titulo: "Skills compartilhadas entre projetos (repositório mãe) e convenção definitiva de TODO.md"
 status: CONCLUÍDO
 criado: "2026-07-14 09:10"
-concluido: "2026-07-14 11:45"
+concluido: "2026-07-14 12:15"
 agentes:
   orquestrador: "Claude Sonnet 5 (Claude Code, VS Code)"
   executor: "Claude Sonnet 5 (Claude Code, VS Code)"
@@ -21,6 +21,7 @@ tarefas:
   - { desc: "Reconciliar Nahoum-Mancano-2026-Antitrust (TODO.md reformatado preservando conteúdo, sync-skills copiado, teste --apply real)", status: concluida, data: "2026-07-14 10:15" }
   - { desc: "Alinhar agentic-institutionalism (TODO.md fresco, sem histórico a preservar)", status: concluida, data: "2026-07-14 10:20" }
   - { desc: "Segunda rodada: renomear todas as skills para inglês, torná-las config-driven (sem hardcode de repositório), adicionar pdf-text-extractor ao mecanismo compartilhado, criar seção Configuração de Skills em CLAUDE.md", status: concluida, data: "2026-07-14 11:15" }
+  - { desc: "Terceira rodada: portar 5 skills de mattpocock/skills (grill-me, grilling, grill-with-docs, edit-article, code-review) após triagem com o autor; reconciliação com instalação concorrente do plugin superpowers por outro agente", status: concluida, data: "2026-07-14 12:15" }
 relacionados:
   - "2026-07-13_Plano_Sincronizar_Governanca_Com_Tese.md"
   - "2026-07-14_1128_instalar-skills-superpowers_conversa-claude.md"
@@ -92,4 +93,16 @@ O autor revisou o trabalho da primeira rodada e apontou um problema real: as ski
   - `request-audit` e `pdf-text-extractor` mantidos (já em inglês; `request-audit` já não tinha hardcode nenhum, confirmado por grep antes de decidir não mexer).
 - `pdf-text-extractor` portado para a mãe (com `scripts/extract_pdf.R`) — não tinha hardcode de caminho, generalização mínima necessária.
 
-**Ainda pendente**: propagar o renomeio + `pdf-text-extractor` + seção de Configuração de Skills (com valores reais) para `Mancano2026-MA-Thesis` e `Nahoum-Mancano-2026-Antitrust`; verificar que as 6 skills compartilhadas ficam com hash de pasta idêntico entre os 3 repositórios.
+**Propagado e verificado** (mesma sessão): `Mancano2026-MA-Thesis` e `Nahoum-Mancano-2026-Antitrust` receberam o renomeio + `pdf-text-extractor` + Configuração de Skills com valores reais de cada um; as 6 skills compartilhadas confirmadas com hash de pasta idêntico nos 3 repositórios; todos com push feito.
+
+---
+
+## Terceira rodada (2026-07-14) — reversão do disable-model-invocation e skills de terceiros (mattpocock/skills)
+
+**Reversão**: o autor decidiu manter `close-task`/`git-cleanup`/`sync-skills` como model-invoked (sem a flag `disable-model-invocation`) — revertido nos 3 repositórios, cada um com seu próprio commit.
+
+**Skills de terceiros**: o autor pediu para instalar skills de [mattpocock/skills](https://github.com/mattpocock/skills) (MIT). Antes de instalar tudo, mapeei as ~32 skills do repositório original (6 categorias) e apresentei uma triagem ("grill me") ao autor, já descartando as claramente específicas de TypeScript/Node. Escolhidas: `grill-me`, `grilling`, `grill-with-docs`, `edit-article`, `code-review`. Descartadas nesta rodada: `git-guardrails-claude-code` (dependia de `jq`, não instalado neste ambiente, e bloquearia `git push` incondicionalmente — conflito direto com o fluxo de trabalho desta sessão), `handoff`/`claude-handoff`, `obsidian-vault`, `loop-me`, e as 4 skills de escrita em estágio (`writing-fragments`/`writing-beats`/`writing-shape` — só `edit-article` ficou).
+
+Instaladas **fielmente ao original** (mesmo texto, arquivos `agents/openai.yaml` de interoperabilidade inclusos) — não são deste projeto, não fazem parte do mecanismo config-driven das skills de governança. Gaps conhecidos e aceitos: `grill-with-docs` referencia `/domain-modeling` (não instalada); `code-review` referencia um workflow de issue-tracker que não existe aqui (degrada graciosamente, documentado no próprio `SKILL.md` do Pocock).
+
+**Concorrência real durante a execução**: enquanto isso, outro agente (Claude Sonnet 4.6, sessão separada, mesmo repositório físico em disco) instalou o plugin `superpowers` (skills globais do Claude Code) e rodou sua própria cerimônia de encerramento — commit `37c28f8`, conversa exportada e registrada, `9-vers/plan/2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md` deixado como handoff. O autor pediu para eu terminar meu trabalho primeiro e depois auditar o dele — feito nesta ordem; auditoria registrada separadamente (ver `9-vers/llm-reviews/README.md` e o prompt de auditoria referenciado).

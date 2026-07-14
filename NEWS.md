@@ -3,6 +3,18 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-14 12:26 — 5 skills de mattpocock/skills instaladas após triagem; reconciliado com instalação concorrente do plugin superpowers
+
+Instaladas 5 skills de [mattpocock/skills](https://github.com/mattpocock/skills) (MIT) — `grill-me`, `grilling`, `grill-with-docs`, `edit-article`, `code-review` — escolhidas depois de mapear as ~32 skills do repositório original e apresentar uma triagem ao autor (a maioria é específica de TypeScript/Node, descartada). `git-guardrails-claude-code` foi descartada nesta rodada: dependia de `jq` (não instalado neste ambiente) e bloquearia `git push` incondicionalmente, o que conflitaria com o fluxo já estabelecido nesta sessão. Instaladas fielmente ao original, sem adaptar ao padrão config-driven das skills de governança (não são deste projeto). Detalhe completo, incluindo os gaps conhecidos (`grill-with-docs`→`/domain-modeling` ausente; `code-review`→workflow de issue-tracker ausente, degrada graciosamente), em `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md` § "Terceira rodada".
+
+**Concorrência real**: esta rodada aconteceu em paralelo a outro agente (Claude Sonnet 4.6) instalando o plugin `superpowers` no mesmo repositório físico — ver entrada abaixo, escrita por ele. Auditoria do trabalho dele feita a seguir, a pedido do autor.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-14 12:26 (Horário Local)
+- **Agente**: Claude Sonnet 5 / Claude Code / VS Code
+- **Mensagem do Commit**: "feat(governance): revert disable-model-invocation, add 5 mattpocock/skills after triage"
+- **Arquivos afetados**: `.claude/skills/grill-me/`, `.claude/skills/grilling/`, `.claude/skills/grill-with-docs/`, `.claude/skills/edit-article/`, `.claude/skills/code-review/`, `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md`, `NEWS.md`
+
 ## 2026-07-14 11:45 — Plugin superpowers instalado; skills globais referenciadas em sync-skills
 
 Instalado o plugin `superpowers` (14 skills globais do Claude Code) e adicionada a seção § 4 ao `sync-skills/SKILL.md` com tabela completa das skills do pacote, regra de convivência com as skills de projeto e orientação de quando usar cada uma. O objetivo é que sempre que `sync-skills` for carregada no contexto, o agente já tenha o inventário das skills globais disponíveis em memória — evitando que elas sejam ignoradas no fluxo de trabalho. O plano `2026-07-14_Plano_Skills_Compartilhadas_TODO.md` é encerrado nesta sessão com todas as tarefas concluídas.
