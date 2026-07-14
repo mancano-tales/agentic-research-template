@@ -1,7 +1,6 @@
 ---
 name: git-cleanup
 description: Limpa pendências acumuladas de `git status` num repositório multiagente — inventaria, agrupa por assunto, entra em modo plano fazendo perguntas objetivas sobre como organizar os commits, e só então executa commits temáticos com staging explícito, checkpoints de governança e documentação sincronizada (NEWS.md, inventário de llm-reviews). Consulta `CLAUDE.md` § "Configuração de Skills" para as particularidades deste repositório (diretório de autoria protegida, arquivo gerenciado externamente, pastas de trabalho contínuo).
-disable-model-invocation: true
 ---
 
 # Limpar pendências de `git status`

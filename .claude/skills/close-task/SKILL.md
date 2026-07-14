@@ -1,7 +1,6 @@
 ---
 name: close-task
 description: Cerimônia completa de encerramento de tarefa. Executa todo o workflow de auditoria: marca planos como concluídos, escreve no NEWS.md, atualiza o inventário de logs, exporta a conversa da sessão atual e faz o commit seguro. Só rodar uma vez no final definitivo da sessão.
-disable-model-invocation: true
 ---
 
 # Cerimônia de Encerramento (Close Task)

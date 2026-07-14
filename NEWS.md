@@ -3,6 +3,16 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-14 11:45 — Reversão: disable-model-invocation removido de close-task/git-cleanup/sync-skills, a pedido do autor
+
+O autor decidiu que quer essas 3 skills de volta ao alcance autônomo do agente (model-invoked, o padrão) — flag `disable-model-invocation: true` removida das 3. Nenhuma outra mudança de conteúdo.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-14 11:45 (Horário Local)
+- **Agente**: Claude Sonnet 5 / Claude Code / VS Code
+- **Mensagem do Commit**: "revert(governance): remove disable-model-invocation from close-task/git-cleanup/sync-skills per author decision"
+- **Arquivos afetados**: `.claude/skills/close-task/SKILL.md`, `.claude/skills/git-cleanup/SKILL.md`, `.claude/skills/sync-skills/SKILL.md`, `NEWS.md`
+
 ## 2026-07-14 11:22 — Refinamentos vindos de referências externas: disable-model-invocation e formato de achados alinhado ao /code-review nativo
 
 O autor pediu para checar se recursos já circulando no mercado (a skill de referência `writing-great-skills` de mattpocock/skills no GitHub, e a funcionalidade nativa de code review do próprio Claude Code) melhoravam o trabalho antes de propagar. Duas mudanças concretas:

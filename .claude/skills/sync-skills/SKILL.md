@@ -1,7 +1,6 @@
 ---
 name: sync-skills
 description: SOP para trazer skills de governança atualizadas do repositório mãe (agentic-research-template) para este projeto, ou para promover uma skill melhorada/nova deste projeto de volta para a mãe. Roda tools/sync-skills.ps1/.sh em modo relatório primeiro, pede confirmação item a item antes de aplicar qualquer mudança, e nunca commita automaticamente.
-disable-model-invocation: true
 ---
 
 # Sincronizar Skills com o Repositório Mãe
