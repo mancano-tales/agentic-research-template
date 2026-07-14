@@ -39,28 +39,3 @@ Não é automatizado por bom motivo: decidir se uma skill é genérica o bastant
 ## 3. Configuração de fonte não-padrão
 
 Se este projeto não estiver como pasta irmã de `agentic-research-template` (layout diferente de máquina, clone em outro lugar), crie `tools/.skills-source` com o caminho absoluto ou relativo do repositório mãe, uma linha só, sem aspas.
-
-## 4. Skills globais (plugins) — não sincronizadas, mas disponíveis
-
-Além das skills de projeto em `.claude/skills/`, existem skills instaladas como **plugins globais do Claude Code** (em `~/.claude/plugins/`). Elas estão disponíveis em qualquer projeto e **não precisam de sync** — mas o agente deve consultá-las ativamente no lugar certo do workflow.
-
-> **Regra de convivência**: se uma tarefa é coberta por uma skill global listada abaixo, use-a. As skills de projeto (`close-task`, `git-cleanup`, etc.) tratam de governança específica do repositório; as globais tratam de processo de desenvolvimento geral. Elas se complementam, não se substituem.
-
-### `superpowers` (pacote instalado via plugin)
-
-| Skill | Quando usar |
-|---|---|
-| `superpowers:using-superpowers` | Ponto de entrada — use no início de qualquer conversa para descobrir quais skills aplicar |
-| `superpowers:brainstorming` | Antes de qualquer trabalho criativo: criar features, componentes ou modificar comportamento |
-| `superpowers:writing-plans` | Ao receber spec ou requisitos de tarefa multi-passo, antes de tocar qualquer arquivo |
-| `superpowers:executing-plans` | Ao executar um plano já escrito — em sessão separada, com checkpoints de revisão |
-| `superpowers:subagent-driven-development` | Ao executar planos com tarefas independentes na sessão atual |
-| `superpowers:dispatching-parallel-agents` | Ao enfrentar 2+ tarefas independentes que podem rodar sem estado compartilhado |
-| `superpowers:using-git-worktrees` | Antes de feature work que precisa de isolamento do workspace atual |
-| `superpowers:test-driven-development` | Antes de escrever código de implementação de qualquer feature ou bugfix |
-| `superpowers:systematic-debugging` | Ao encontrar qualquer bug, falha de teste ou comportamento inesperado |
-| `superpowers:requesting-code-review` | Ao concluir implementações ou antes de merge |
-| `superpowers:receiving-code-review` | Antes de implementar sugestões de review, especialmente se parecerem questionáveis |
-| `superpowers:verification-before-completion` | Antes de declarar trabalho concluído, antes de `close-task` |
-| `superpowers:finishing-a-development-branch` | Quando implementação está completa e é preciso decidir como integrar |
-| `superpowers:writing-skills` | Ao criar ou editar skills — use antes de promover uma skill local para a mãe (seção 2 acima) |

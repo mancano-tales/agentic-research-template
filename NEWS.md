@@ -3,6 +3,16 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-14 12:45 — Auditoria da adição de skills globais (superpowers) concluída: REQUER REFATORAÇÃO MENOR, corrigido na mesma rodada
+
+Auditoria independente (prompt deixado pelo agente autor em `9-vers/plan/2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md`) do commit `37c28f8`, que tinha adicionado uma tabela de skills globais do plugin `superpowers` como § 4 de `sync-skills/SKILL.md`. Verificado fisicamente antes de aceitar qualquer alegação: commit e diff conferem, as 14 skills listadas existem de verdade no plugin instalado (nomes e contagem 1:1), as 5 fragilidades autodeclaradas pelo autor original são precisas. Veredito: `[REQUER REFATORAÇÃO MENOR]` — achado principal não coberto pela autocrítica: a tabela estava no lugar errado (escopo de `sync-skills` é sincronizar skills *de projeto*, não catalogar plugins *de máquina*) e documentava informação não-portável (`~/.claude/plugins/`, local por usuário/máquina) como se fosse portável — já tinha sido propagada para 2 repositórios consumidores antes da correção. Corrigido: conteúdo movido para nova seção em `CLAUDE.md` ("Skills Globais Disponíveis Neste Ambiente"), com aviso explícito de que é inventário de máquina (não de projeto) e destaque para `using-superpowers`, a única skill do pacote com invocação mandatória por design. Resultado completo da auditoria registrado no próprio prompt.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-14 12:45 (Horário Local)
+- **Agente**: Claude Sonnet 5 / Claude Code / VS Code
+- **Mensagem do Commit**: "docs(governance): fix scope of superpowers skills catalog - move from sync-skills to CLAUDE.md with machine-caveat"
+- **Arquivos afetados**: `.claude/skills/sync-skills/SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `9-vers/plan/2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md`, `9-vers/plan/README.md`, `NEWS.md`
+
 ## 2026-07-14 12:26 — 5 skills de mattpocock/skills instaladas após triagem; reconciliado com instalação concorrente do plugin superpowers
 
 Instaladas 5 skills de [mattpocock/skills](https://github.com/mattpocock/skills) (MIT) — `grill-me`, `grilling`, `grill-with-docs`, `edit-article`, `code-review` — escolhidas depois de mapear as ~32 skills do repositório original e apresentar uma triagem ao autor (a maioria é específica de TypeScript/Node, descartada). `git-guardrails-claude-code` foi descartada nesta rodada: dependia de `jq` (não instalado neste ambiente) e bloquearia `git push` incondicionalmente, o que conflitaria com o fluxo já estabelecido nesta sessão. Instaladas fielmente ao original, sem adaptar ao padrão config-driven das skills de governança (não são deste projeto). Detalhe completo, incluindo os gaps conhecidos (`grill-with-docs`→`/domain-modeling` ausente; `code-review`→workflow de issue-tracker ausente, degrada graciosamente), em `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md` § "Terceira rodada".

@@ -84,6 +84,33 @@ Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório 
 
 ---
 
+## Skills Globais Disponíveis Neste Ambiente
+
+> ⚠️ **Isto documenta o que está instalado nesta máquina/usuário em 2026-07-14, não este projeto.** Diferente das skills em `.claude/skills/` (versionadas, viajam com o repositório), plugins globais do Claude Code vivem em `~/.claude/plugins/` — locais por máquina/usuário, **não vêm junto num clone**. Se você está lendo isto num clone novo ou noutra máquina, **não assuma que o pacote abaixo está instalado** — confira com `/plugin list` antes de confiar nesta tabela. Esta seção existe deliberadamente fora de `sync-skills/SKILL.md` (onde foi colocada por engano numa rodada anterior — ver auditoria em `9-vers/plan/2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md`): `sync-skills` documenta sincronização de skills *de projeto*; isto é inventário de máquina, escopo diferente.
+
+**Regra de convivência**: se uma tarefa é coberta por uma skill global listada abaixo, use-a — as skills de projeto (`close-task`, `git-cleanup`, etc.) tratam de governança específica do repositório, as globais tratam de processo de desenvolvimento geral; elas se complementam, não se substituem. **Atenção especial a `using-superpowers`**: ao contrário das outras 13, ela não é "use quando aplicável" — o próprio `SKILL.md` dela exige invocação obrigatória ("YOU ABSOLUTELY MUST invoke the skill... not negotiable") sempre que houver qualquer chance de aplicação, no início de qualquer conversa. Isso pode competir por atenção com os SOPs deste repositório (`close-task`, `git-cleanup`) — as instruções do usuário sempre prevalecem sobre ambos.
+
+### `superpowers` (pacote instalado via plugin, confirmado em `~/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/`)
+
+| Skill | Quando usar |
+|---|---|
+| `superpowers:using-superpowers` | Ponto de entrada — invocação obrigatória por design (ver aviso acima), não apenas "quando aplicável" |
+| `superpowers:brainstorming` | Antes de qualquer trabalho criativo: criar features, componentes ou modificar comportamento |
+| `superpowers:writing-plans` | Ao receber spec ou requisitos de tarefa multi-passo, antes de tocar qualquer arquivo |
+| `superpowers:executing-plans` | Ao executar um plano já escrito — em sessão separada, com checkpoints de revisão |
+| `superpowers:subagent-driven-development` | Ao executar planos com tarefas independentes na sessão atual |
+| `superpowers:dispatching-parallel-agents` | Ao enfrentar 2+ tarefas independentes que podem rodar sem estado compartilhado |
+| `superpowers:using-git-worktrees` | Antes de feature work que precisa de isolamento do workspace atual |
+| `superpowers:test-driven-development` | Antes de escrever código de implementação de qualquer feature ou bugfix |
+| `superpowers:systematic-debugging` | Ao encontrar qualquer bug, falha de teste ou comportamento inesperado |
+| `superpowers:requesting-code-review` | Ao concluir implementações ou antes de merge |
+| `superpowers:receiving-code-review` | Antes de implementar sugestões de review, especialmente se parecerem questionáveis |
+| `superpowers:verification-before-completion` | Antes de declarar trabalho concluído, antes de `close-task` |
+| `superpowers:finishing-a-development-branch` | Quando implementação está completa e é preciso decidir como integrar |
+| `superpowers:writing-skills` | Ao criar ou editar skills — use antes de promover uma skill local para a mãe |
+
+---
+
 ## Configuração de Skills (Skill Configuration)
 
 > As skills genéricas acima consultam esta seção para qualquer dado específico deste repositório — nunca hardcodeiam. **As chaves (o que existe) são definidas pelas skills; o valor de cada linha é deste projeto.** Preencha ao adotar o template; deixe em branco/`[PLACEHOLDER]` se não se aplicar.
