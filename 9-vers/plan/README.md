@@ -46,7 +46,7 @@ news: []
 <!-- BEGIN_PLAN_INDEX -->
 | Plano | Status | Executor | O que é |
 |---|---|---|---|
-| `2026-07-14_Plano_Skills_Compartilhadas_TODO.md` | **EM EXECUÇÃO** | Claude Sonnet 5 (Claude Code, VS Code) | Skills compartilhadas entre projetos (repositório mãe) e convenção definitiva de TODO.md |
+| `2026-07-14_Plano_Skills_Compartilhadas_TODO.md` | CONCLUÍDO (2026-07-14 11:45) | Claude Sonnet 5 (Claude Code, VS Code) | Skills compartilhadas entre projetos (repositório mãe) e convenção definitiva de TODO.md |
 | `2026-07-13_Plano_Sincronizar_Governanca_Com_Tese.md` | CONCLUÍDO (2026-07-13 22:37) | Claude Sonnet 5 (Claude Code, VS Code) | Sincronizar mancano-project-template com o estado atual de governança do repositório Mancano2026-MA-Thesis |
 | `2026-07-11_Plano_TEMPLATE.md` | HISTÓRICO | Claude Fable 5 | Título do Plano de Trabalho |
 <!-- END_PLAN_INDEX -->

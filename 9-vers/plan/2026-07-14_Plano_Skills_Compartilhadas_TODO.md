@@ -1,9 +1,9 @@
 ---
 tipo: Plano
 titulo: "Skills compartilhadas entre projetos (repositório mãe) e convenção definitiva de TODO.md"
-status: EM EXECUÇÃO
+status: CONCLUÍDO
 criado: "2026-07-14 09:10"
-concluido: null
+concluido: "2026-07-14 11:45"
 agentes:
   orquestrador: "Claude Sonnet 5 (Claude Code, VS Code)"
   executor: "Claude Sonnet 5 (Claude Code, VS Code)"
@@ -23,6 +23,7 @@ tarefas:
   - { desc: "Segunda rodada: renomear todas as skills para inglês, torná-las config-driven (sem hardcode de repositório), adicionar pdf-text-extractor ao mecanismo compartilhado, criar seção Configuração de Skills em CLAUDE.md", status: concluida, data: "2026-07-14 11:15" }
 relacionados:
   - "2026-07-13_Plano_Sincronizar_Governanca_Com_Tese.md"
+  - "2026-07-14_1128_instalar-skills-superpowers_conversa-claude.md"
 news: ["2026-07-14"]
 ---
 

@@ -3,6 +3,16 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-14 11:45 — Plugin superpowers instalado; skills globais referenciadas em sync-skills
+
+Instalado o plugin `superpowers` (14 skills globais do Claude Code) e adicionada a seção § 4 ao `sync-skills/SKILL.md` com tabela completa das skills do pacote, regra de convivência com as skills de projeto e orientação de quando usar cada uma. O objetivo é que sempre que `sync-skills` for carregada no contexto, o agente já tenha o inventário das skills globais disponíveis em memória — evitando que elas sejam ignoradas no fluxo de trabalho. O plano `2026-07-14_Plano_Skills_Compartilhadas_TODO.md` é encerrado nesta sessão com todas as tarefas concluídas.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-14 11:45 (Horário Local)
+- **Agente**: Claude Sonnet 4.6 / Claude Code / VS Code
+- **Mensagem do Commit**: "feat(governance): reference superpowers global skills in sync-skills, close active plan"
+- **Arquivos afetados**: `.claude/skills/sync-skills/SKILL.md`, `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md`, `9-vers/llm-reviews/README.md`, `NEWS.md`
+
 ## 2026-07-14 11:45 — Reversão: disable-model-invocation removido de close-task/git-cleanup/sync-skills, a pedido do autor
 
 O autor decidiu que quer essas 3 skills de volta ao alcance autônomo do agente (model-invoked, o padrão) — flag `disable-model-invocation: true` removida das 3. Nenhuma outra mudança de conteúdo.

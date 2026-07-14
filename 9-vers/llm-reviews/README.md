@@ -28,4 +28,5 @@ O script lê o arquivo de log JSONL original da sessão e converte-o para Markdo
 
 | Arquivo | Tipo | Fonte | Assunto |
 |---|---|---|---|
+| `2026-07-14_1128_instalar-skills-superpowers_conversa-claude.md` | Sessão de Trabalho | Claude | Instalação do plugin superpowers, referência das skills globais em sync-skills/SKILL.md, encerramento do plano de skills compartilhadas |
 | `2026-07-13_2225_sincronizacao-governanca_conversa-antigravity.md` | Sessão de Trabalho | Antigravity | Sincronização de governança com tese principal |
