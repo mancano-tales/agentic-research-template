@@ -3,6 +3,19 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-14 11:22 — Refinamentos vindos de referências externas: disable-model-invocation e formato de achados alinhado ao /code-review nativo
+
+O autor pediu para checar se recursos já circulando no mercado (a skill de referência `writing-great-skills` de mattpocock/skills no GitHub, e a funcionalidade nativa de code review do próprio Claude Code) melhoravam o trabalho antes de propagar. Duas mudanças concretas:
+
+1. **`disable-model-invocation: true`** adicionado a `close-task`, `git-cleanup` e `sync-skills` — são ações consequentes (encerram sessão, commits em lote, sobrescrevem skills locais) que só devem rodar por invocação explícita do usuário pelo nome; a flag remove a `description` do alcance do agente, então nada dispara essas skills sozinho por inferência. `request-audit`/`export-conversation`/`pdf-text-extractor` ficam sem a flag (baixo risco, faz sentido o agente alcançar por conta própria). Documentado em `CLAUDE.md` § "Skills Compartilhadas Entre Projetos".
+2. **`request-audit` § D (Formato de Resposta)** reescrita para exigir, por achado: cenário de falha concreto (input/estado → output errado, não uma alegação vaga) e um veredito `CONFIRMED`/`PLAUSIBLE` — mesma convenção da ferramenta nativa `ReportFindings` do Claude Code, incluindo `outcome` (`fixed`/`skipped`/`no_change_needed`) para re-reportar achados numa segunda rodada em vez de reescrever a lista do zero.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-14 11:22 (Horário Local)
+- **Agente**: Claude Sonnet 5 / Claude Code / VS Code
+- **Mensagem do Commit**: "refactor(governance): add disable-model-invocation to consequential skills, align request-audit findings format with native /code-review"
+- **Arquivos afetados**: `.claude/skills/close-task/SKILL.md`, `.claude/skills/git-cleanup/SKILL.md`, `.claude/skills/sync-skills/SKILL.md`, `.claude/skills/request-audit/SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `NEWS.md`
+
 ## 2026-07-14 11:15 — Skills renomeadas para inglês e reescritas config-driven; pdf-text-extractor entra no mecanismo compartilhado
 
 O autor apontou um problema real na primeira rodada: as skills compartilhadas tinham texto específico de cada projeto hardcoded (caminhos da tese), fazendo o relatório do `sync-skills` marcá-las como "desatualizada" permanentemente nos consumidores — sinal sem significado. Detalhe completo em `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md` § "Segunda rodada".

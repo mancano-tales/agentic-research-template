@@ -77,6 +77,8 @@ Este template é o **repositório mãe** de um conjunto de skills de governança
 
 Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório por padrão; `-Apply <skill>` para aplicar) ou pela skill `sync-skills`, que envolve o script com a cerimônia de revisão e commit explícito — nunca há sincronização automática/silenciosa nem link físico entre repositórios (junctions/symlinks entre repositórios distintos já se mostraram frágeis sob renomeação de pasta e sincronização de nuvem). O script compara a **pasta inteira** de cada skill (não só o `SKILL.md`) — algumas skills, como `pdf-text-extractor`, têm scripts auxiliares junto. Se este projeto **é** o repositório mãe, edite as skills direto em `.claude/skills/`; se é um consumidor, veja `.claude/skills/sync-skills/SKILL.md` para o fluxo completo, incluindo como promover uma skill local de volta para a mãe.
 
+**Invocação — `disable-model-invocation`**: `close-task`, `git-cleanup` e `sync-skills` têm essa flag (`true`) porque são ações consequentes (encerram sessão, fazem commits em lote, sobrescrevem skills locais) que só devem rodar quando o usuário pede explicitamente pelo nome — a flag remove a `description` do alcance do agente, então nenhuma outra skill nem o próprio agente pode disparar essas sozinho por inferência. `request-audit`, `export-conversation` e `pdf-text-extractor` ficam sem a flag (padrão = model-invoked): são de baixo risco e fazem sentido o agente alcançar por conta própria quando a situação pedir.
+
 ---
 
 ## Configuração de Skills (Skill Configuration)

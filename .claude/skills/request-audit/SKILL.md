@@ -44,14 +44,18 @@ Você deve inserir explicitamente este aviso no início do prompt para o auditor
 - **Auto-Crítica / Fragilidades:** Liste áreas onde a sua solução pode ser frágil. Para cada uma, declare explicitamente **se você já tentou mitigar e como, ou se está deliberadamente deixando sem mitigação e por quê** — não liste fragilidades como perguntas retóricas em aberto para o auditor resolver sozinho (ex.: em vez de "isso pode ser um problema de concorrência?", escreva "não tratei concorrência aqui; risco aceito porque X" ou "tratei com Y, mas não testei o caso Z"). Exemplos de categorias a considerar: limitações de regex, tratamento de concorrência/`index.lock`, encoding, edge cases esquecidos.
 
 ### D. Formato de Resposta Exigido do Auditor
-O seu prompt deve instruir o auditor a retornar a análise estruturada com as seguintes seções:
+O seu prompt deve instruir o auditor a retornar a análise estruturada com as seguintes seções (mesma convenção da funcionalidade nativa de code review do Claude Code — se o ambiente do auditor tiver a ferramenta `ReportFindings`, ele deve usá-la; senão, replicar a mesma estrutura em prosa):
 1. **Avaliação Geral:** Uma análise qualitativa rigorosa da robustez da arquitetura implementada.
 2. **Veredito Categórico:** O auditor DEVE escolher e declarar exatamente um destes vereditos:
    - `[APROVADO]` (A solução é robusta e pronta para produção).
    - `[REQUER REFATORAÇÃO MENOR]` (Pequenos ajustes necessários).
    - `[REQUER REFATORAÇÃO ESTRUTURAL]` (A solução possui vulnerabilidades graves).
    - `[DESCARTADO]` (Over-engineering excessivo, ou a abordagem está incorreta desde a premissa).
-3. **Lista de Tarefas Acionáveis:** Se houver falhas apontadas, o auditor deve retornar uma lista explícita de *bullet points* (TODOs) com os próximos passos para o agente executor corrigir as vulnerabilidades.
+3. **Lista de Achados, ordenada do mais grave ao menos grave.** Cada achado individual DEVE ter:
+   - **Resumo de uma frase** do defeito.
+   - **Cenário de falha concreto**: input/estado específico → output errado/crash. Não "isso pode falhar sob concorrência" — sim "dois agentes rodando X ao mesmo tempo perdem a atualização de Y, reproduzido rodando Z".
+   - **Veredito do achado**: `CONFIRMED` (reproduziu empiricamente — rodou o código/comando e viu o problema acontecer) ou `PLAUSIBLE` (identificou por leitura/raciocínio, não testou). Nunca omita esta tag — é o que diferencia um achado verificado de uma suspeita.
+   - Se houver uma rodada de correção seguida de nova auditoria (ver seção E), o agente executor re-reporta cada achado antigo com `outcome`: `fixed` / `skipped` / `no_change_needed`, em vez de reescrever a lista do zero.
 
 ### E. Após o Veredito (Teto de Rodadas)
 O seu prompt deve instruir explicitamente:
