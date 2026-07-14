@@ -32,14 +32,19 @@
 2. Arquivos marcados com banner de desatualização/arquivamento são mantidos apenas para histórico e não devem orientar o trabalho corrente.
 3. Cada documento de diretriz possui uma função única (tabela abaixo).
 
-**Mapa de Diretrizes de Apoio**:
+**Map of guidance documents** (what orients agents and humans, and what each file is for):
 
-| Documento | Público-alvo | Função | Gatilho de Atualização |
+| Document | Audience | Function | Update trigger |
 |---|---|---|---|
-| `CLAUDE.md` (este) | Agentes de IA | Estado atual do projeto, regras críticas e convenções de build | Decisão de design ou mudança no estado |
-| `README.md` | Humanos | O que é o projeto, guia de instalação e execução rápida | Mudança estrutural do repositório |
-| `GUIDANCE.md` | Ambos | Sitemap rápido apontando para o sitemap completo de diretrizes | Layout de pastas alterado |
-| `9-vers/plan/README.md` | Ambos | Índice e status de todos os planos de execução de tarefas | Criação ou mudança de status de plano |
+| `CLAUDE.md` (this file) | Agents | CURRENT state of the research, conventions, gotchas, this map | Conception/design change |
+| `AGENTS.md` (this file also)| Agents | Hard link to CLAUDE.md | Conception/design change |
+| `TODO.md` | Both | Append-only task log tracking pending and completed items | Check only during planning |
+| `README.md` | Humans | What the project is, repo map, how to build | Structural repo change |
+| `GUIDANCE.md` / `9-vers/GUIDANCE_MAP.md` | Both | Master sitemap of directory structures and guidance documents | Repository layout or guideline change |
+| `NEWS.md` (root) | Both | Intellectual changelog — history, never rewritten | Every session with a relevant decision |
+| `9-vers/plan/README.md` | Both | **Status index of all plans** (ATIVO/CONCLUÍDO/…) | Any plan created or changing status |
+| `9-vers/plan/*.md` | Both | Dated plans; the ATIVO ones guide current work | New plan per work round |
+| `9-vers/llm-reviews/README.md` | Both | Convention for archived LLM conversations/reviews | Convention change |
 
 ---
 
