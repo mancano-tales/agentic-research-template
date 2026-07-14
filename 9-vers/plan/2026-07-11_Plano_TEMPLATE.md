@@ -2,7 +2,7 @@
 tipo: Plano
 titulo: "Título do Plano de Trabalho"
 status: HISTÓRICO
-criado: 2026-07-11
+criado: "2026-07-11 00:00"
 concluido: null
 agentes:
   orquestrador: "Claude Fable 5"

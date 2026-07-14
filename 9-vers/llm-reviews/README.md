@@ -28,4 +28,4 @@ O script lê o arquivo de log JSONL original da sessão e converte-o para Markdo
 
 | Arquivo | Tipo | Fonte | Assunto |
 |---|---|---|---|
-| (Vazio - adicione novas conversas exportadas nesta tabela) | | | |
+| `2026-07-13_2225_sincronizacao-governanca_conversa-antigravity.md` | Sessão de Trabalho | Antigravity | Sincronização de governança com tese principal |

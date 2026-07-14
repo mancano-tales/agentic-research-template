@@ -21,10 +21,10 @@ PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
 PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
 
 # ── Helpers de Impressão ──────────────────────────────────────────────────────
-cat_info  <- function(...) cat("ℹ ", paste0(...), "\n")
+cat_info <- function(...) cat("ℹ ", paste0(...), "\n")
 cat_success <- function(...) cat("✅ ", paste0(...), "\n")
-cat_warn  <- function(...) cat("⚠ ", paste0(...), "\n")
-cat_error  <- function(...) cat("❌ ", paste0(...), "\n")
+cat_warn <- function(...) cat("⚠ ", paste0(...), "\n")
+cat_error <- function(...) cat("❌ ", paste0(...), "\n")
 
 # ── 0. Sincronizar CLAUDE.md e AGENTS.md se divergirem (Self-healing Link) ───
 if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
@@ -32,19 +32,19 @@ if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
   mtime_agents <- file.info("AGENTS.md")$mtime
   content_claude <- readLines("CLAUDE.md", warn = FALSE, encoding = "UTF-8")
   content_agents <- readLines("AGENTS.md", warn = FALSE, encoding = "UTF-8")
-  
+
   # Nova verificação de segurança contra conflitos de merge nos arquivos de contexto
   if (any(grepl("^<<<<<<<", content_claude)) || any(grepl("^<<<<<<<", content_agents))) {
     cat_error("Conflitos de merge detectados em CLAUDE.md ou AGENTS.md. Sincronização automática suspensa.")
     quit(status = 1)
   }
-  
+
   if (!identical(content_claude, content_agents)) {
     cat_warn("Divergência detectada entre CLAUDE.md e AGENTS.md (possível quebra de link por salvamento atômico).")
-    
+
     # Calcular diferença absoluta de tempo em segundos
     diff_time <- abs(difftime(mtime_claude, mtime_agents, units = "secs"))
-    
+
     if (diff_time <= 2) {
       cat_error("Timestamps de modificação muito próximos (<= 2s). Sincronização automática suspensa para evitar perda de dados.")
       cat_error("Por favor, verifique manualmente os arquivos CLAUDE.md e AGENTS.md.")
@@ -55,19 +55,33 @@ if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
         bak_name <- sprintf("AGENTS.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S"))
         file.copy("AGENTS.md", bak_name, overwrite = TRUE)
         cat_warn(paste("Backup criado em:", bak_name))
-        
+
         file.remove("AGENTS.md")
         link_success <- FALSE
         if (.Platform$OS.type == "windows") {
-          link_success <- tryCatch({
-            shell("cmd /c mklink /h AGENTS.md CLAUDE.md", translate = TRUE, intern = TRUE)
-            TRUE
-          }, error = function(e) FALSE)
+          # system2("cmd.exe", ...) diretamente, NUNCA shell("cmd /c ...").
+          # Causa raiz encontrada e confirmada empiricamente: quando a
+          # variável de ambiente SHELL aponta para o bash do Git (é o caso
+          # sob o hook de pre-commit, que roda dentro do Git Bash/MSYS2),
+          # shell() não invoca cmd.exe — abre um cmd.exe interativo aninhado
+          # que nunca executa "mklink" de fato (o mklink real nunca roda; o
+          # link nunca é criado). system2() chamando cmd.exe diretamente,
+          # com os argumentos como vetor, contorna esse problema por
+          # completo — testado e confirmado neste exato ambiente.
+          mklink_out <- suppressWarnings(tryCatch(
+            system2("cmd.exe", c("/c", "mklink", "/h", "AGENTS.md", "CLAUDE.md"), stdout = TRUE, stderr = TRUE),
+            error = function(e) character(0)
+          ))
+          mklink_status <- attr(mklink_out, "status")
+          link_success <- (is.null(mklink_status) || mklink_status == 0) && file.exists("AGENTS.md")
         } else {
-          link_success <- tryCatch({
-            system("ln CLAUDE.md AGENTS.md", intern = TRUE)
-            TRUE
-          }, error = function(e) FALSE)
+          link_success <- tryCatch(
+            {
+              system("ln CLAUDE.md AGENTS.md", intern = TRUE)
+              TRUE
+            },
+            error = function(e) FALSE
+          )
         }
         if (!link_success || !file.exists("AGENTS.md")) {
           cat_warn("Falha ao criar link físico (permissão ou volumes distintos). Fazendo fallback para cópia física...")
@@ -78,19 +92,26 @@ if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
         bak_name <- sprintf("CLAUDE.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S"))
         file.copy("CLAUDE.md", bak_name, overwrite = TRUE)
         cat_warn(paste("Backup criado em:", bak_name))
-        
+
         file.remove("CLAUDE.md")
         link_success <- FALSE
         if (.Platform$OS.type == "windows") {
-          link_success <- tryCatch({
-            shell("cmd /c mklink /h CLAUDE.md AGENTS.md", translate = TRUE, intern = TRUE)
-            TRUE
-          }, error = function(e) FALSE)
+          # Ver comentário no ramo espelhado acima (CLAUDE.md -> AGENTS.md)
+          # sobre por que system2("cmd.exe", ...) substitui shell("cmd /c ...").
+          mklink_out <- suppressWarnings(tryCatch(
+            system2("cmd.exe", c("/c", "mklink", "/h", "CLAUDE.md", "AGENTS.md"), stdout = TRUE, stderr = TRUE),
+            error = function(e) character(0)
+          ))
+          mklink_status <- attr(mklink_out, "status")
+          link_success <- (is.null(mklink_status) || mklink_status == 0) && file.exists("CLAUDE.md")
         } else {
-          link_success <- tryCatch({
-            system("ln AGENTS.md CLAUDE.md", intern = TRUE)
-            TRUE
-          }, error = function(e) FALSE)
+          link_success <- tryCatch(
+            {
+              system("ln AGENTS.md CLAUDE.md", intern = TRUE)
+              TRUE
+            },
+            error = function(e) FALSE
+          )
         }
         if (!link_success || !file.exists("CLAUDE.md")) {
           cat_warn("Falha ao criar link físico (permissão ou volumes distintos). Fazendo fallback para cópia física...")
@@ -98,6 +119,64 @@ if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
         }
       }
     }
+  }
+}
+
+# ── 0b. Sincronizar .github/copilot-instructions.md a partir de CLAUDE.md ────
+# Terceiro hard link criado por setup.ps1/setup.sh, mas que a auto-cura da
+# seção 0 nunca cobriu (achado da auditoria de 2026-07-12) — CLAUDE.md podia
+# divergir dele indefinidamente sem nenhum alerta do pre-commit. Direção
+# única (CLAUDE.md -> copilot-instructions.md, não bidirecional como o par
+# CLAUDE.md/AGENTS.md) porque copilot-instructions.md não tem conteúdo
+# próprio — é sempre cópia/link de CLAUDE.md.
+if (file.exists("CLAUDE.md") && file.exists(".github/copilot-instructions.md")) {
+  content_claude_cp <- readLines("CLAUDE.md", warn = FALSE, encoding = "UTF-8")
+  content_copilot <- readLines(".github/copilot-instructions.md", warn = FALSE, encoding = "UTF-8")
+  if (!identical(content_claude_cp, content_copilot)) {
+    cat_warn("Divergência detectada entre CLAUDE.md e .github/copilot-instructions.md (hard link provavelmente quebrado). Ressincronizando...")
+    file.remove(".github/copilot-instructions.md")
+    copilot_link_success <- FALSE
+    if (.Platform$OS.type == "windows") {
+      copilot_out <- suppressWarnings(tryCatch(
+        system2("cmd.exe", c("/c", "mklink", "/h", ".github\\copilot-instructions.md", "CLAUDE.md"), stdout = TRUE, stderr = TRUE),
+        error = function(e) character(0)
+      ))
+      copilot_status <- attr(copilot_out, "status")
+      copilot_link_success <- (is.null(copilot_status) || copilot_status == 0) && file.exists(".github/copilot-instructions.md")
+    } else {
+      copilot_link_success <- tryCatch(
+        {
+          system("ln CLAUDE.md .github/copilot-instructions.md", intern = TRUE)
+          TRUE
+        },
+        error = function(e) FALSE
+      )
+    }
+    if (!copilot_link_success || !file.exists(".github/copilot-instructions.md")) {
+      cat_warn("Falha ao recriar hard link de copilot-instructions.md. Fazendo fallback para cópia física...")
+      file.copy("CLAUDE.md", ".github/copilot-instructions.md", overwrite = TRUE)
+    }
+  }
+}
+
+# ── 0c. Verificar validade da junction .agents -> .claude (informativo) ──────
+# .agents é gitignorado (conveniência de ambiente local, não conteúdo
+# versionado) — por isso só avisa, nunca bloqueia commit. Achado da
+# auditoria de 2026-07-12: se .agents virasse um diretório comum (não-link)
+# por qualquer motivo, nada detectava isso antes.
+#
+# Checagem por EQUIVALÊNCIA DE CONTEÚDO, não por metadado de link: testado
+# ao vivo que Sys.readlink(".agents") devolve string vazia mesmo para uma
+# junction NTFS genuína e funcional neste ambiente (base R não expõe essa
+# informação para junctions, só para symlinks POSIX/NTFS) — checar reparse
+# point exigiria uma chamada externa (fsutil/PowerShell) sem ganho real,
+# já que o que importa de fato é se .agents aponta para o MESMO conteúdo de
+# .claude, não o mecanismo técnico por trás.
+if (dir.exists(".agents") && dir.exists(".claude")) {
+  claude_listing <- sort(list.files(".claude"))
+  agents_listing <- suppressWarnings(tryCatch(sort(list.files(".agents")), error = function(e) NULL))
+  if (is.null(agents_listing) || !identical(claude_listing, agents_listing)) {
+    cat_warn("'.agents' existe mas seu conteúdo não bate com '.claude' (junction quebrada ou virou diretório comum?). Re-execute setup.ps1/setup.sh para recriar.")
   }
 }
 
@@ -123,30 +202,90 @@ if (!has_yaml) {
   cat_info("Nota: Para validação YAML robusta e completa, instale o pacote 'yaml' no R (install.packages('yaml')).")
 }
 
+# Parseia um escalar single-quoted YAML a partir de uma string que começa
+# com a aspa de abertura "'", respeitando o escape padrão YAML: uma aspa
+# simples duplicada ('') dentro do escalar representa um apóstrofo literal.
+# Sem isso, um valor como 'Plano do Autor''s Revisão' truncava
+# silenciosamente no primeiro apóstrofo (bug real, achado em auditoria de
+# 2026-07-12 — corrigido só aqui, no caminho `chave: valor`; os itens de
+# lista de `relacionados`/`news`/`tarefas` continuam com strip simples, por
+# serem tipicamente nomes de arquivo/strings curtas sem apóstrofo).
+parse_yaml_single_quoted <- function(s) {
+  chars <- strsplit(s, "")[[1]]
+  n <- length(chars)
+  out <- character(0)
+  i <- 2 # pula a aspa de abertura na posição 1
+  while (i <= n) {
+    if (chars[i] == "'") {
+      if (i < n && chars[i + 1] == "'") {
+        out <- c(out, "'")
+        i <- i + 2
+      } else {
+        return(paste(out, collapse = ""))
+      }
+    } else {
+      out <- c(out, chars[i])
+      i <- i + 1
+    }
+  }
+  paste(out, collapse = "") # sem aspa de fechamento (malformado) — devolve o que tem
+}
+
+# Divide uma string em itens separados por vírgula, IGNORANDO vírgulas que
+# estejam dentro de aspas (simples ou duplas). Sem isso,
+# `relacionados: ["Plano A, revisão", "Plano B"]` quebrava o primeiro
+# elemento em dois (bug real, achado em auditoria de 2026-07-12).
+split_respecting_quotes <- function(s) {
+  chars <- strsplit(s, "")[[1]]
+  n <- length(chars)
+  items <- character(0)
+  buf <- character(0)
+  quote_char <- NA_character_
+  i <- 1
+  while (i <= n) {
+    ch <- chars[i]
+    if (!is.na(quote_char)) {
+      buf <- c(buf, ch)
+      if (ch == quote_char) quote_char <- NA_character_
+    } else if (ch == '"' || ch == "'") {
+      quote_char <- ch
+      buf <- c(buf, ch)
+    } else if (ch == ",") {
+      items <- c(items, paste(buf, collapse = ""))
+      buf <- character(0)
+    } else {
+      buf <- c(buf, ch)
+    }
+    i <- i + 1
+  }
+  items <- c(items, paste(buf, collapse = ""))
+  trimws(items)
+}
+
 # Helper para parsear YAML (R Base, baseado em estados)
 parse_yaml_lines <- function(file_lines, full_path) {
   yaml_markers <- which(file_lines == "---")
   yaml_data <- list()
   if (length(yaml_markers) >= 2) {
     yaml_text <- file_lines[(yaml_markers[1] + 1):(yaml_markers[2] - 1)]
-    
+
     in_agentes_block <- FALSE
     last_key <- NULL
-    
+
     for (line in yaml_text) {
       line_clean <- trimws(line)
       if (line_clean == "") next
-      
+
       # Tratar itens de lista (como "- item" ou "- conversa-123")
       if (grepl("^-\\s+", line_clean)) {
         item_val <- trimws(gsub("^-\\s*", "", line_clean))
-        
+
         # Remover comentário inline se não houver aspas
         if (!grepl("^[\"']", item_val)) {
           item_val <- gsub("\\s+#.*$", "", item_val)
         }
         item_val <- gsub("^[\"']|[\"']$", "", item_val)
-        
+
         if (!is.null(last_key)) {
           if (last_key == "relacionados") {
             yaml_data$relacionados <- c(yaml_data$relacionados, item_val)
@@ -158,7 +297,7 @@ parse_yaml_lines <- function(file_lines, full_path) {
         }
         next
       }
-      
+
       # Detecção de bloco indentado de agentes
       if (grepl("^agentes:", line_clean)) {
         in_agentes_block <- TRUE
@@ -166,22 +305,26 @@ parse_yaml_lines <- function(file_lines, full_path) {
         last_key <- "agentes"
         next
       }
-      
+
       # Se começou outra chave não-indentada, sair do bloco de agentes
       if (in_agentes_block && grepl("^[a-zA-Z0-9_-]+:", line_clean) && !grepl("^\\s+", line)) {
         in_agentes_block <- FALSE
       }
-      
+
       if (grepl(":", line_clean)) {
         parts <- strsplit(line_clean, ":")[[1]]
         key <- trimws(parts[1])
         value <- trimws(paste(parts[-1], collapse = ":"))
 
-        # Suporte mínimo a arrays inline: chave: ["a", "b"] (sem vírgulas internas)
+        # Arrays inline: chave: ["a", "b"] — split_respecting_quotes() não
+        # quebra elementos que têm vírgula dentro das aspas.
         if (grepl("^\\[", value) && grepl("\\]\\s*(#.*)?$", value)) {
           inner <- sub("\\]\\s*(#.*)?$", "", sub("^\\[", "", value))
-          items <- if (nchar(trimws(inner)) == 0) character(0)
-                   else trimws(strsplit(inner, ",")[[1]])
+          items <- if (nchar(trimws(inner)) == 0) {
+            character(0)
+          } else {
+            split_respecting_quotes(inner)
+          }
           items <- gsub("^[\"']|[\"']$", "", items)
           if (in_agentes_block && grepl("^\\s+", line)) {
             yaml_data$agentes[[key]] <- items
@@ -191,7 +334,7 @@ parse_yaml_lines <- function(file_lines, full_path) {
           }
           next
         }
-        
+
         # Limpar comentários inline de forma robusta
         # Se começar com aspas, o comentário real só pode vir após a aspa de fechamento correspondente
         if (grepl("^\"", value)) {
@@ -200,18 +343,19 @@ parse_yaml_lines <- function(file_lines, full_path) {
             value <- regmatches(value, val_match)
           }
         } else if (grepl("^'", value)) {
-          val_match <- regexpr("^'([^']*)'", value)
-          if (val_match > 0) {
-            value <- regmatches(value, val_match)
-          }
+          # parse_yaml_single_quoted() já devolve o valor sem aspas e com
+          # '' colapsado a um apóstrofo literal; rewrap com uma aspa em
+          # cada ponta para o strip genérico logo abaixo funcionar igual
+          # ao caminho de aspas duplas, sem duplicar lógica.
+          value <- paste0("'", parse_yaml_single_quoted(value), "'")
         } else {
           # Sem aspas, remover comentários cortando a partir de espaço + #
           value <- gsub("\\s+#.*$", "", value)
         }
-        
+
         # Remover aspas externas se existirem
         value <- gsub("^[\"']|[\"']$", "", value)
-        
+
         if (in_agentes_block && grepl("^\\s+", line)) {
           yaml_data$agentes[[key]] <- value
         } else {
@@ -234,11 +378,14 @@ parse_yaml_file <- function(full_path) {
     yaml_markers <- which(file_lines == "---")
     if (length(yaml_markers) >= 2 && yaml_markers[1] == 1) {
       yaml_text <- paste(file_lines[(yaml_markers[1] + 1):(yaml_markers[2] - 1)], collapse = "\n")
-      yaml_data <- tryCatch({
-        yaml::yaml.load(yaml_text)
-      }, error = function(e) {
-        parse_yaml_lines(file_lines, full_path)
-      })
+      yaml_data <- tryCatch(
+        {
+          yaml::yaml.load(yaml_text)
+        },
+        error = function(e) {
+          parse_yaml_lines(file_lines, full_path)
+        }
+      )
       return(yaml_data)
     }
     return(list())
@@ -251,8 +398,12 @@ parse_yaml_file <- function(full_path) {
 
 # Trata NULL, "null" (parser de fallback) e string vazia como ausência de valor
 nz <- function(x) {
-  if (is.null(x) || length(x) == 0) return(NULL)
-  if (is.character(x) && (identical(trimws(x[1]), "null") || identical(trimws(x[1]), ""))) return(NULL)
+  if (is.null(x) || length(x) == 0) {
+    return(NULL)
+  }
+  if (is.character(x) && (identical(trimws(x[1]), "null") || identical(trimws(x[1]), ""))) {
+    return(NULL)
+  }
   x
 }
 
@@ -271,7 +422,9 @@ STATUS_KEYWORDS <- c("EM EXECUÇÃO", "CONCLUÍDO", "SUPERADO", "HISTÓRICO", "P
 normalize_status <- function(x) {
   x <- trimws(gsub("\\*", "", x))
   for (kw in STATUS_KEYWORDS) {
-    if (startsWith(x, kw)) return(kw)
+    if (startsWith(x, kw)) {
+      return(kw)
+    }
   }
   x
 }
@@ -317,7 +470,9 @@ if (should_sync) {
   # data de conclusão quando disponível)
   build_status_cell <- function(meta) {
     status <- trimws(meta$status)
-    if (status %in% c("ATIVO", "EM EXECUÇÃO")) return(sprintf("**%s**", status))
+    if (status %in% c("ATIVO", "EM EXECUÇÃO")) {
+      return(sprintf("**%s**", status))
+    }
     concluido <- nz(meta$concluido)
     if (status == "CONCLUÍDO" && !is.null(concluido)) {
       return(sprintf("CONCLUÍDO (%s)", format(concluido)))
@@ -339,10 +494,10 @@ if (should_sync) {
   for (line in region) {
     is_header <- grepl("^\\|\\s*Plano\\s*\\|", line)
     is_separator <- grepl("^\\|[\\s:|-]+\\|\\s*$", line, perl = TRUE)
-    if (is_header || is_separator) next  # cabeçalho é reescrito programaticamente
+    if (is_header || is_separator) next # cabeçalho é reescrito programaticamente
 
     if (!grepl("^\\|", line)) {
-      out_rows <- c(out_rows, line)  # linha não-tabular: preservar verbatim
+      out_rows <- c(out_rows, line) # linha não-tabular: preservar verbatim
       next
     }
 
@@ -351,7 +506,7 @@ if (should_sync) {
     meta <- if (nchar(fname) > 0) plan_meta[[fname]] else NULL
 
     if (is.null(meta)) {
-      out_rows <- c(out_rows, line)  # sem YAML (legado) ou fora da varredura: preservar verbatim
+      out_rows <- c(out_rows, line) # sem YAML (legado) ou fora da varredura: preservar verbatim
       next
     }
 
@@ -360,10 +515,13 @@ if (should_sync) {
     index_status_cell <- if (length(parts) >= 3) parts[[3]] else ""
 
     if (normalize_status(index_status_cell) == yaml_status) {
-      out_rows <- c(out_rows, line)  # já em sincronia: preservar anotações manuais
+      out_rows <- c(out_rows, line) # já em sincronia: preservar anotações manuais
     } else {
-      desc <- if (length(parts) >= 5 && nchar(trimws(parts[[5]])) > 0) trimws(parts[[5]])
-              else (nz(meta$titulo) %||% nz(meta$title) %||% "—")
+      desc <- if (length(parts) >= 5 && nchar(trimws(parts[[5]])) > 0) {
+        trimws(parts[[5]])
+      } else {
+        (nz(meta$titulo) %||% nz(meta$title) %||% "—")
+      }
       executor <- build_executor_cell(meta, if (length(parts) >= 4) nz(trimws(parts[[4]])) else NULL)
       out_rows <- c(out_rows, sprintf("| %s | %s | %s | %s |", parts[[2]], build_status_cell(meta), executor, desc))
       n_updated <- n_updated + 1
@@ -390,8 +548,10 @@ if (should_sync) {
     index_lines[end_tag:length(index_lines)]
   )
   writeLines(new_index_content, PATH_PLAN_INDEX, useBytes = TRUE)
-  cat_success(sprintf("Índice plan/README.md sincronizado: %d linha(s) atualizada(s), %d plano(s) novo(s), demais preservadas.",
-                      n_updated, length(new_rows)))
+  cat_success(sprintf(
+    "Índice plan/README.md sincronizado: %d linha(s) atualizada(s), %d plano(s) novo(s), demais preservadas.",
+    n_updated, length(new_rows)
+  ))
   quit(status = 0)
 }
 
@@ -408,8 +568,10 @@ git_capture <- function(args) {
   ))
   status <- attr(result, "status")
   if (!is.null(status) && status != 0) {
-    cat_warn(sprintf("git %s retornou status %s: %s",
-                      paste(args, collapse = " "), status, paste(result, collapse = " | ")))
+    cat_warn(sprintf(
+      "git %s retornou status %s: %s",
+      paste(args, collapse = " "), status, paste(result, collapse = " | ")
+    ))
     return(character(0))
   }
   Encoding(result) <- "UTF-8"
@@ -421,16 +583,46 @@ git_capture <- function(args) {
 staged_files <- git_capture(c("diff", "--cached", "--name-only", "--diff-filter=ACMR"))
 staged_files <- staged_files[nzchar(staged_files)]
 
+# Mapa novo-caminho -> caminho-antigo para arquivos renomeados neste commit.
+# Necessário porque `git diff --cached -- <novo-caminho>` SOZINHO não
+# consegue parear o rename (o pathspec restringe a visão do git ao lado
+# "novo" antes da lógica de detecção de rename rodar), e sem o pareamento o
+# diff mostra o arquivo INTEIRO como adicionado — o que reintroduziria o
+# mesmo lockout retroativo que o escopo "só linhas adicionadas" existe para
+# evitar (confirmado empiricamente: um arquivo de 4-DA-Code/ renomeado com
+# uma única linha nova aparecia com suas ~50-2000 linhas pré-existentes
+# todas como "adicionadas"). Usar --name-status -M (não -z) é seguro aqui
+# porque core.quotepath=false já garante nomes UTF-8 sem escaping octal.
+rename_map <- local({
+  ns <- git_capture(c("diff", "--cached", "--name-status", "-M", "--diff-filter=R"))
+  ns <- ns[nzchar(ns)]
+  if (length(ns) == 0) {
+    return(list())
+  }
+  m <- list()
+  for (line in ns) {
+    parts <- strsplit(line, "\t")[[1]]
+    if (length(parts) >= 3) m[[parts[3]]] <- parts[2] # m[[novo]] <- antigo
+  }
+  m
+})
+
 # Tamanho do BLOB staged (não do arquivo em disco): reflete corretamente um
 # `git add -p` parcial. ls-files -> sha -> cat-file -s em vez do atalho
 # ":caminho" porque ":" inicia "magic pathspec" no git.
 get_staged_blob_size <- function(filepath) {
   ls_out <- git_capture(c("ls-files", "-s", "--", filepath))
-  if (length(ls_out) == 0) return(NA_real_)
+  if (length(ls_out) == 0) {
+    return(NA_real_)
+  }
   sha <- sub("^\\S+\\s+(\\S+)\\s+\\S+\\t.*$", "\\1", ls_out[1])
-  if (!grepl("^[0-9a-f]{40}$|^[0-9a-f]{64}$", sha)) return(NA_real_)
+  if (!grepl("^[0-9a-f]{40}$|^[0-9a-f]{64}$", sha)) {
+    return(NA_real_)
+  }
   size_out <- git_capture(c("cat-file", "-s", sha))
-  if (length(size_out) == 0) return(NA_real_)
+  if (length(size_out) == 0) {
+    return(NA_real_)
+  }
   suppressWarnings(as.numeric(size_out[1]))
 }
 
@@ -440,21 +632,41 @@ get_staged_blob_size <- function(filepath) {
 # não podem travar retroativamente por causa de algo que já estava no
 # arquivo antes deste commit.
 get_staged_added_lines <- function(filepath) {
-  diff_out <- git_capture(c("diff", "--cached", "--no-color", "-U0", "--", filepath))
-  if (length(diff_out) == 0) return(character(0))
-  added <- diff_out[grepl("^\\+", diff_out) & !grepl("^\\+\\+\\+", diff_out)]
-  sub("^\\+", "", added)
+  old_path <- rename_map[[filepath]]
+  if (!is.null(old_path)) {
+    # Passar os DOIS caminhos (antigo + novo) com -M é o que permite ao git
+    # parear o rename e devolver só a diferença real — testado empiricamente
+    # contra a alternativa de um só caminho (mostra o arquivo inteiro).
+    diff_out <- git_capture(c("diff", "--cached", "-M", "--no-color", "-U0", "--", old_path, filepath))
+  } else {
+    diff_out <- git_capture(c("diff", "--cached", "--no-color", "-U0", "--", filepath))
+  }
+  if (length(diff_out) == 0) {
+    return(character(0))
+  }
+  # useBytes = TRUE: arquivos grandes com conteúdo exótico (ex.: os próprios
+  # exports de conversa em 9-vers/llm-reviews/, que embutem JSON com
+  # sequências de escape longas) fazem o grepl padrão (baseado em locale)
+  # lançar "unable to translate to a wide string" / "input string is
+  # invalid" — achado ao vivo commitando este mesmo arquivo. Os padrões
+  # aqui são sempre ASCII puro, então casar por byte é equivalente e evita
+  # por completo a detecção/tradução de encoding que estava falhando.
+  added <- diff_out[grepl("^\\+", diff_out, useBytes = TRUE) &
+    !grepl("^\\+\\+\\+", diff_out, useBytes = TRUE)]
+  sub("^\\+", "", added, useBytes = TRUE)
 }
 
 # ── T2. Bloqueio de Arquivos Staged Grandes (> 10 MB) ─────────────────────────
 # Protege contra upload acidental de dados brutos/scraping não anonimizados
 # para o histórico do Git (o repo já tem tools/git-purgar-dados-historico.ps1
 # — sinal de que esse problema já aconteceu aqui antes).
-MAX_STAGED_BYTES <- 10485760  # 10 * 1024 * 1024
+MAX_STAGED_BYTES <- 10485760 # 10 * 1024 * 1024
 
 if (length(staged_files) > 0) {
-  cat_info(sprintf("Verificando tamanho de %d arquivo(s) staged (limite: %d bytes)...",
-                    length(staged_files), MAX_STAGED_BYTES))
+  cat_info(sprintf(
+    "Verificando tamanho de %d arquivo(s) staged (limite: %d bytes)...",
+    length(staged_files), MAX_STAGED_BYTES
+  ))
   for (f in staged_files) {
     blob_size <- get_staged_blob_size(f)
     if (is.na(blob_size)) {
@@ -462,8 +674,49 @@ if (length(staged_files) > 0) {
       next
     }
     if (blob_size > MAX_STAGED_BYTES) {
-      cat_error(sprintf("Arquivo staged '%s' excede o limite de %d bytes (tamanho: %d bytes / %.2f MB).",
-                        f, MAX_STAGED_BYTES, blob_size, blob_size / 1048576))
+      cat_error(sprintf(
+        "Arquivo staged '%s' excede o limite de %d bytes (tamanho: %d bytes / %.2f MB).",
+        f, MAX_STAGED_BYTES, blob_size, blob_size / 1048576
+      ))
+      errors_found <- TRUE
+    }
+  }
+}
+
+# ── T6. Bloqueio de Marcadores de Conflito de Merge Staged ────────────────────
+# Achado testando casos-limite não cobertos (2026-07-13): um arquivo staged
+# com marcadores de conflito (`<<<<<<<`/`=======`/`>>>>>>>`) não resolvidos
+# passava batido por T1/T2/T4 — nenhuma checagem existente olhava para isso
+# fora do caso bem específico já coberto na seção 0 (só CLAUDE.md/AGENTS.md).
+# Escopo "só linhas adicionadas", igual T1/T4: nenhum arquivo do repo tem
+# esse padrão hoje (confirmado por `git grep`), então não há risco de
+# lockout retroativo, mas mantém a mesma disciplina de design do resto do
+# script. Aplica a TODOS os arquivos staged (não só .R/.qmd): marcador de
+# conflito é um problema em qualquer arquivo de texto, inclusive .md.
+#
+# Exceção auto-referencial (mesmo padrão do T1 com "MancanoSync/"): os
+# exports de conversa em 9-vers/llm-reviews/ são transcrição verbatim de
+# sessões de agente — qualquer teste feito ali DENTRO da própria sessão
+# (ex.: testar esta mesma regex contra ">>>>>>> outra-branch") fica
+# registrado literalmente no log e dispararia T6 sem ser um conflito de
+# verdade. Achado ao vivo commitando o export desta sessão.
+CONFLICT_MARKER_REGEX <- r"{^(<{7}|>{7}|={7}$)}"
+t6_files <- staged_files[!grepl("^9-vers/llm-reviews/", staged_files)]
+
+if (length(t6_files) > 0) {
+  cat_info(sprintf(
+    "Verificando marcadores de conflito de merge em %d arquivo(s) staged (linhas adicionadas)...",
+    length(t6_files)
+  ))
+  for (f in t6_files) {
+    added_lines <- get_staged_added_lines(f)
+    if (length(added_lines) == 0) next
+    hits <- grepl(CONFLICT_MARKER_REGEX, added_lines, useBytes = TRUE)
+    if (any(hits)) {
+      offenders <- trimws(added_lines[hits])
+      for (o in head(offenders, 5)) {
+        cat_error(sprintf("Marcador de conflito de merge não resolvido em '%s': %s", f, o))
+      }
       errors_found <- TRUE
     }
   }
@@ -477,6 +730,34 @@ if (length(staged_files) > 0) {
 # especificamente, capítulos com "bibliography: C:/Users/.../Zotero-....bib"
 # pré-existente no frontmatter — um lockout permanente e real, não hipotético.
 ABS_PATH_REGEX <- r"{([A-Za-z]:[\\/]Users[\\/]|[\\/][Hh]ome[\\/]|[\\/][Uu]sers[\\/])[A-Za-z0-9_-]+}"
+# file:///c:/Users/... (o formato de link Markdown que vazou 22 arquivos na
+# auditoria de 2026-07-12) já cai no mesmo padrão acima ("c:/Users/" é
+# substring da URI), então nenhuma regex adicional é necessária para cobrir
+# esse caso — reaproveitado tal e qual pelo T5 abaixo.
+
+# Helper compartilhado por T1 e T5: varre linhas adicionadas de um conjunto
+# de arquivos staged em busca de caminho absoluto local, reportando até 5
+# ocorrências por arquivo.
+check_abs_path_in_added_lines <- function(files, label) {
+  found_any <- FALSE
+  for (f in files) {
+    added_lines <- get_staged_added_lines(f)
+    if (length(added_lines) == 0) next
+    hits <- grepl(ABS_PATH_REGEX, added_lines, useBytes = TRUE) |
+      grepl("MancanoSync/", added_lines, fixed = TRUE, useBytes = TRUE)
+    if (any(hits)) {
+      offenders <- trimws(added_lines[hits])
+      for (o in head(offenders, 5)) {
+        cat_error(sprintf("Caminho absoluto local introduzido em '%s': %s", f, o))
+      }
+      if (length(offenders) > 5) {
+        cat_error(sprintf("... e mais %d linha(s) com o mesmo problema em '%s'.", length(offenders) - 5, f))
+      }
+      found_any <- TRUE
+    }
+  }
+  found_any
+}
 
 # Exceção auto-referencial: tools/validate-governance.R contém, no próprio
 # código-fonte, a string literal "MancanoSync/" (o termo que esta mesma
@@ -486,26 +767,41 @@ ABS_PATH_REGEX <- r"{([A-Za-z]:[\\/]Users[\\/]|[\\/][Hh]ome[\\/]|[\\/][Uu]sers[\
 # desta implementação). Confirmado por grep que o arquivo não contém nenhum
 # caminho absoluto real fora desses dois casos.
 rq_files <- staged_files[grepl("\\.(R|qmd)$", staged_files, ignore.case = TRUE) &
-                          staged_files != "tools/validate-governance.R"]
+  staged_files != "tools/validate-governance.R"]
 
 if (length(rq_files) > 0) {
-  cat_info(sprintf("Verificando caminhos absolutos locais em %d arquivo(s) .R/.qmd staged (linhas adicionadas)...",
-                    length(rq_files)))
-  for (f in rq_files) {
-    added_lines <- get_staged_added_lines(f)
-    if (length(added_lines) == 0) next
-    hits <- grepl(ABS_PATH_REGEX, added_lines) | grepl("MancanoSync/", added_lines, fixed = TRUE)
-    if (any(hits)) {
-      offenders <- trimws(added_lines[hits])
-      for (o in head(offenders, 5)) {
-        cat_error(sprintf("Caminho absoluto local introduzido em '%s': %s", f, o))
-      }
-      if (length(offenders) > 5) {
-        cat_error(sprintf("... e mais %d linha(s) com o mesmo problema em '%s'.", length(offenders) - 5, f))
-      }
-      errors_found <- TRUE
-    }
-  }
+  cat_info(sprintf(
+    "Verificando caminhos absolutos locais em %d arquivo(s) .R/.qmd staged (linhas adicionadas)...",
+    length(rq_files)
+  ))
+  if (check_abs_path_in_added_lines(rq_files, "T1")) errors_found <- TRUE
+}
+
+# ── T5. Caminhos Absolutos Locais nos Documentos de Governança Ativos ─────────
+# Fecha a lacuna encontrada na auditoria de 2026-07-12
+# (2026-07-12_Avaliacao_Auditoria_Governanca_Blackbox.md): 22 arquivos
+# vazavam "file:///c:/Users/Mancano/..." — o escopo do T1 (só .R/.qmd) nunca
+# cobriria isso, porque o vazamento estava na PROSA de governança, não em
+# código/capítulo. Lista curada (não glob) — deliberadamente não inclui
+# `9-vers/llm-reviews/*.md` nem planos já CONCLUÍDO/HISTÓRICO (valor
+# documental de sessão passada, não devem ser reescritos) nem entradas
+# antigas do NEWS.md (CLAUDE.md § "Guidance Documents": "never rewrite NEWS
+# entries" — mas o escopo "só linhas adicionadas" já protege isso por
+# construção: uma entrada nova em NEWS.md que introduza um caminho absoluto
+# É pega; entradas antigas nunca são escaneadas de novo).
+GOVERNANCE_DOCS <- c(
+  "CLAUDE.md", "AGENTS.md", "README.md", "GUIDANCE.md",
+  "NEWS.md", "9-vers/GUIDANCE_MAP.md",
+  "9-vers/plan/README.md", "9-vers/llm-reviews/README.md"
+)
+gov_files <- staged_files[staged_files %in% GOVERNANCE_DOCS]
+
+if (length(gov_files) > 0) {
+  cat_info(sprintf(
+    "Verificando caminhos absolutos locais em %d documento(s) de governança staged (linhas adicionadas)...",
+    length(gov_files)
+  ))
+  if (check_abs_path_in_added_lines(gov_files, "T5")) errors_found <- TRUE
 }
 
 # ── T4. Integridade de Citações vs. Biblioteca Zotero (.bib) ──────────────────
@@ -515,13 +811,18 @@ if (length(rq_files) > 0) {
 # checagem degradar em silêncio na próxima reexportação.
 PATH_QUARTO_YML <- file.path(CWD, "_quarto.yml")
 resolve_bib_path <- function() {
-  fallback <- file.path(CWD, "2-set", "Zotero-Library-cr-2026-06-08.bib")
-  if (!file.exists(PATH_QUARTO_YML)) return(fallback)
+  if (!file.exists(PATH_QUARTO_YML)) {
+    return(NA_character_)
+  }
   qy_lines <- readLines(PATH_QUARTO_YML, encoding = "UTF-8", warn = FALSE)
   bib_line <- grep("^bibliography:\\s*", qy_lines, value = TRUE)
-  if (length(bib_line) == 0) return(fallback)
+  if (length(bib_line) == 0) {
+    return(NA_character_)
+  }
   bib_rel <- gsub("^[\"']|[\"']$", "", trimws(sub("^bibliography:\\s*", "", bib_line[1])))
-  if (nchar(bib_rel) == 0) return(fallback)
+  if (nchar(bib_rel) == 0) {
+    return(NA_character_)
+  }
   file.path(CWD, bib_rel)
 }
 PATH_BIB <- resolve_bib_path()
@@ -535,8 +836,8 @@ QUARTO_XREF_PREFIXES <- c("sec-", "fig-", "tbl-")
 # escape do "{" seguinte e a exclusão de "\@title" etc. não funciona.
 CITATION_REGEX <- r"{(?<![\\{A-Za-z0-9_])@([A-Za-z0-9_:.#$%&+?<>~/-]+)}"
 
-if (!file.exists(PATH_BIB)) {
-  cat_warn(sprintf("Arquivo de bibliografia não encontrado em '%s'. Checagem T4 pulada.", PATH_BIB))
+if (is.na(PATH_BIB) || !file.exists(PATH_BIB)) {
+  cat_info("Nenhum arquivo de bibliografia configurado ou encontrado. Checagem T4 pulada.")
 } else {
   bib_lines <- readLines(PATH_BIB, encoding = "UTF-8", warn = FALSE)
   key_matches <- regmatches(bib_lines, regexec("^@[A-Za-z]+\\{([^,]+),", bib_lines))
@@ -552,8 +853,12 @@ if (!file.exists(PATH_BIB)) {
   resolve_key <- function(candidate) {
     trial <- candidate
     repeat {
-      if (trial %in% valid_bib_keys) return(TRUE)
-      if (nchar(trial) == 0 || !grepl("[.:]$", trial)) return(FALSE)
+      if (trial %in% valid_bib_keys) {
+        return(TRUE)
+      }
+      if (nchar(trial) == 0 || !grepl("[.:]$", trial)) {
+        return(FALSE)
+      }
       trial <- substr(trial, 1, nchar(trial) - 1)
     }
   }
@@ -565,15 +870,45 @@ if (!file.exists(PATH_BIB)) {
   citation_files <- staged_files[grepl("\\.qmd$", staged_files, ignore.case = TRUE)]
 
   if (length(citation_files) > 0) {
-    cat_info(sprintf("Verificando integridade de citações em %d arquivo(s) .qmd staged (linhas adicionadas)...",
-                      length(citation_files)))
+    cat_info(sprintf(
+      "Verificando integridade de citações em %d arquivo(s) .qmd staged (linhas adicionadas)...",
+      length(citation_files)
+    ))
     for (f in citation_files) {
       added_lines <- get_staged_added_lines(f)
       if (length(added_lines) == 0) next
 
       bad_keys_in_file <- character(0)
+      in_chunk <- FALSE
       for (line in added_lines) {
-        found <- regmatches(line, gregexpr(CITATION_REGEX, line, perl = TRUE))[[1]]
+        # Pandoc NUNCA processa citações dentro de um bloco de código
+        # cercado (``` ... ```, com ou sem {r}/{python}), então o conteúdo
+        # de um chunk não deveria ser escaneado por T4 em absoluto — achado
+        # real de auditoria (2026-07-13): `email <- c("a", "@boto2014")`,
+        # uma linha comum de código R sem nada de roxygen, era capturada
+        # como candidata a citação e bloquearia o commit se "boto2014" não
+        # existisse no .bib. A guarda anterior (só pular linhas "#'") não
+        # protegia contra isso.
+        #
+        # Rastreamos abertura/fechamento de cerca dentro das PRÓPRIAS
+        # linhas adicionadas. Correto por construção quando um chunk novo é
+        # adicionado por inteiro (caso comum). Limitação aceita e
+        # documentada: se uma linha nova for inserida no MEIO de um chunk
+        # já existente e não tocado, a linha de abertura da cerca não
+        # aparece no diff (`-U0` só mostra linhas mudadas), então esse caso
+        # residual não é pego por este rastreamento — a checagem de "#'"
+        # abaixo continua como segunda camada, mas não cobre tudo. Rastrear
+        # isso com 100% de precisão exigiria ler o arquivo staged inteiro e
+        # cruzar com números de linha do hunk, o que não se justifica dado
+        # o padrão da suite (todas as travas já aceitam alguma imprecisão
+        # equivalente em favor de simplicidade).
+        if (grepl("^\\s*```", line)) {
+          in_chunk <- !in_chunk
+          next
+        }
+        if (in_chunk) next
+        if (grepl("^\\s*#'", line)) next
+        found <- regmatches(line, gregexpr(CITATION_REGEX, line, perl = TRUE, useBytes = TRUE))[[1]]
         if (length(found) == 0) next
         keys <- sub("^@", "", found)
         keys <- keys[!grepl(paste0("^(", paste(QUARTO_XREF_PREFIXES, collapse = "|"), ")"), keys)]
@@ -586,8 +921,10 @@ if (!file.exists(PATH_BIB)) {
 
       bad_keys_in_file <- unique(bad_keys_in_file)
       if (length(bad_keys_in_file) > 0) {
-        cat_error(sprintf("Citação(ões) sem entrada em '%s' no arquivo '%s': %s",
-                          basename(PATH_BIB), f, paste(bad_keys_in_file, collapse = ", ")))
+        cat_error(sprintf(
+          "Citação(ões) sem entrada em '%s' no arquivo '%s': %s",
+          basename(PATH_BIB), f, paste(bad_keys_in_file, collapse = ", ")
+        ))
         errors_found <- TRUE
       }
     }
@@ -628,12 +965,15 @@ if (!has_styler) {
       # hash é sempre idêntico e o aviso nunca dispararia (bug encontrado e
       # corrigido durante os testes desta implementação).
       dry_mode <- if (AUTO_STYLE_FIX) "off" else "on"
-      style_result <- tryCatch({
-        styler::style_file(full_path, dry = dry_mode)
-      }, error = function(e) {
-        cat_warn(sprintf("styler falhou em '%s': %s", f, conditionMessage(e)))
-        NULL
-      })
+      style_result <- tryCatch(
+        {
+          styler::style_file(full_path, dry = dry_mode)
+        },
+        error = function(e) {
+          cat_warn(sprintf("styler falhou em '%s': %s", f, conditionMessage(e)))
+          NULL
+        }
+      )
       if (is.null(style_result)) next
 
       changed <- isTRUE(style_result$changed[1])
@@ -695,16 +1035,16 @@ for (line in table_lines) {
   if (length(parts) >= 3) {
     file_raw <- trimws(parts[[2]])
     filename <- gsub("`", "", file_raw)
-    
+
     # Remover observações em parênteses do nome do arquivo
     filename <- trimws(gsub("\\s*\\([^)]+\\)", "", filename))
     status_raw <- trimws(parts[[3]])
-    
+
     # Ignorar outlines explicativos
     if (filename %in% c("ATIVO", "EM EXECUÇÃO", "PARCIAL", "CONCLUÍDO", "SUPERADO", "HISTÓRICO")) {
       next
     }
-    
+
     indexed_plans[[filename]] <- status_raw
   }
 }
@@ -735,7 +1075,7 @@ for (plan_file in names(indexed_plans)) {
   } else {
     full_path <- file.path(PATH_PLAN_DIR, plan_file)
   }
-  
+
   if (!file.exists(full_path)) {
     cat_error(sprintf("Arquivo indexado não existe fisicamente: '%s' (caminho tentado: %s)", plan_file, full_path))
     errors_found <- TRUE
@@ -757,15 +1097,17 @@ for (plan_file in names(indexed_plans)) {
     filename_regex <- "^([0-9]{4}-[0-9]{2}-[0-9]{2})_([A-Za-z0-9]+)_(.+)\\.(md|qmd)$"
     matches <- regexec(filename_regex, plan_file)
     match_parts <- regmatches(plan_file, matches)[[1]]
-    
+
     if (length(match_parts) == 0) {
       cat_error(sprintf("Nome do arquivo fora do padrão de nomenclatura: '%s'", plan_file))
       errors_found <- TRUE
     } else {
       plan_type <- match_parts[3]
       if (!(plan_type %in% valid_types)) {
-        cat_error(sprintf("Tipo de plano inválido no nome do arquivo '%s': '%s' (Esperado: %s)", 
-                          plan_file, plan_type, paste(valid_types, collapse = ", ")))
+        cat_error(sprintf(
+          "Tipo de plano inválido no nome do arquivo '%s': '%s' (Esperado: %s)",
+          plan_file, plan_type, paste(valid_types, collapse = ", ")
+        ))
         errors_found <- TRUE
       }
     }
@@ -784,8 +1126,10 @@ for (plan_file in names(indexed_plans)) {
     norm_index_status <- normalize_status(index_status)
 
     if (yaml_status != norm_index_status) {
-      cat_error(sprintf("Divergência de status no plano '%s': YAML diz '%s' e README.md diz '%s'", 
-                        plan_file, yaml_status, index_status))
+      cat_error(sprintf(
+        "Divergência de status no plano '%s': YAML diz '%s' e README.md diz '%s'",
+        plan_file, yaml_status, index_status
+      ))
       errors_found <- TRUE
     }
 
@@ -797,10 +1141,10 @@ for (plan_file in names(indexed_plans)) {
       if (is.null(concluido_data) || concluido_data == "null" || concluido_data == "") {
         cat_warn(sprintf("Plano '%s' está CONCLUÍDO no YAML, mas a data 'concluido' está vazia ou nula.", plan_file))
       }
-      
+
       # Procurar por logs vinculados em 'relacionados'
       linked_conversas <- grep("conversa-", yaml_data$relacionados, value = TRUE)
-      
+
       # Verificar se alguma conversa vinculada está listada no inventário
       found_in_inventory <- FALSE
       if (length(linked_conversas) > 0) {
@@ -811,7 +1155,7 @@ for (plan_file in names(indexed_plans)) {
           }
         }
       }
-      
+
       # Se não encontrou por relacionados, tentar encontrar no inventário de reviews por data
       if (!found_in_inventory && !is.null(concluido_data) && concluido_data != "null") {
         matching_date_reviews <- grep(paste0("^", concluido_data), indexed_reviews, value = TRUE)
@@ -819,7 +1163,7 @@ for (plan_file in names(indexed_plans)) {
           found_in_inventory <- TRUE
         }
       }
-      
+
       if (!found_in_inventory) {
         cat_error(sprintf("Plano concluído '%s' não possui log de conversa correspondente registrado em llm-reviews/README.md", plan_file))
         errors_found <- TRUE

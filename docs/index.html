@@ -413,7 +413,7 @@ agentes:
                     <strong>3. Ative os Git Hooks:</strong> Copie os hooks da pasta <code>hooks/</code> para a pasta oculta do Git:
                     <div class="code-container">
                         <button class="copy-btn" onclick="copyText('hooks-setup')">Copiar</button>
-                        <code id="hooks-setup">cp hooks/pre-commit.sample .git/hooks/pre-commit<br>chmod +x .git/hooks/pre-commit</code>
+                        <code id="hooks-setup">git config core.hooksPath hooks</code>
                     </div>
                 </li>
             </ol>

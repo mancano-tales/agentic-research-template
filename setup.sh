@@ -62,26 +62,28 @@ if [ -f CLAUDE.md ]; then
     fi
 fi
 
-# 4. Copiar Git Hooks automaticamente se a pasta .git existir
+# 4. Configurar Git Hooks via core.hooksPath se a pasta .git existir
 if [ -d .git ]; then
-    mkdir -p .git/hooks
-    if [ -f hooks/pre-commit.sample ]; then
-        cp hooks/pre-commit.sample .git/hooks/pre-commit
-        chmod +x .git/hooks/pre-commit
-        echo "  - Git Hook 'pre-commit' instalado automaticamente em .git/hooks/pre-commit."
+    git config core.hooksPath hooks
+    echo "  - Git hooks configurados via 'core.hooksPath = hooks'."
+    
+    # Limpeza de eventuais hooks órfãos antigos
+    if [ -f .git/hooks/pre-commit ]; then
+        rm -f .git/hooks/pre-commit
+        echo "  - Limpo hook antigo em .git/hooks/pre-commit."
     fi
-    if [ -f hooks/post-merge.sample ]; then
-        cp hooks/post-merge.sample .git/hooks/post-merge
-        chmod +x .git/hooks/post-merge
-        echo "  - Git Hook 'post-merge' instalado automaticamente em .git/hooks/post-merge."
+    if [ -f .git/hooks/post-merge ]; then
+        rm -f .git/hooks/post-merge
+        echo "  - Limpo hook antigo em .git/hooks/post-merge."
     fi
 fi
 
 echo "------------------------------------------------------------------------"
-echo "⚠ [AVISO DE CUIDADO] Editores como VS Code / Obsidian com 'Atomic Save' habilitado"
+echo "⚠ [AVISO DE CUIDADO] Editores como VS Code / Obsidian com 'Atomic Save' habilitado,"
+echo "  e clientes de sincronização de nuvem (Dropbox/OneDrive/Google Drive/iCloud),"
 echo "  podem quebrar Hard Links físicos ao salvar arquivos. Caso eles divirjam,"
 echo "  execute este script novamente para restaurar os links."
 echo "------------------------------------------------------------------------"
-echo "💡 Git Hooks úteis de validação automática foram configurados em '.git/hooks/'."
+echo "💡 Git Hooks úteis de validação automática foram configurados para rodar a partir de 'hooks/'."
 echo "------------------------------------------------------------------------"
 echo "✅ Configuração concluída com sucesso!"

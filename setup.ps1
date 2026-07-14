@@ -10,12 +10,18 @@
 
 # Verificar sistema de arquivos NTFS
 $drive = Split-Path -Path $PSScriptRoot -Qualifier
-$fs = (Get-Volume -DriveLetter $drive.Replace(":", "")).FileSystem
-if ($fs -ne "NTFS") {
-    Write-Warning "⚠ [AVISO] O sistema de arquivos detectado em $drive é '$fs' (Não NTFS)."
-    Write-Warning "  Junctions e Hard Links requerem sistema NTFS para funcionar corretamente."
-    Write-Warning "  Pode ocorrer falha ao tentar criar os links abaixo."
-    Write-Host "------------------------------------------------------------------------"
+if ($drive -match '^[A-Za-z]:$') {
+    try {
+        $fs = (Get-Volume -DriveLetter $drive.Replace(":", "")).FileSystem
+        if ($fs -ne "NTFS") {
+            Write-Warning "⚠ [AVISO] O sistema de arquivos detectado em $drive é '$fs' (Não NTFS)."
+            Write-Warning "  Junctions e Hard Links requerem sistema NTFS para funcionar corretamente."
+            Write-Warning "  Pode ocorrer falha ao tentar criar os links abaixo."
+            Write-Host "------------------------------------------------------------------------"
+        }
+    } catch {
+        Write-Warning "⚠ [AVISO] Não foi possível verificar o sistema de arquivos em $drive."
+    }
 }
 
 # Verificar se Rscript está no PATH
@@ -67,27 +73,29 @@ if (Test-Path -Path "CLAUDE.md" -PathType Leaf) {
     }
 }
 
-# 4. Copiar Git Hooks automaticamente se a pasta .git existir
+# 4. Configurar Git Hooks via core.hooksPath se a pasta .git existir
 if (Test-Path -Path ".git" -PathType Container) {
-    if (-not (Test-Path -Path ".git/hooks" -PathType Container)) {
-        New-Item -ItemType Directory -Path ".git/hooks" -Force | Out-Null
+    git config core.hooksPath hooks
+    Write-Host "  - Git hooks configurados via 'core.hooksPath = hooks'." -ForegroundColor Green
+    
+    # Limpeza de eventuais hooks órfãos antigos
+    if (Test-Path -Path ".git/hooks/pre-commit" -PathType Leaf) {
+        Remove-Item -Path ".git/hooks/pre-commit" -Force
+        Write-Host "  - Limpo hook antigo em .git/hooks/pre-commit." -ForegroundColor DarkGray
     }
-    if (Test-Path -Path "hooks/pre-commit.sample" -PathType Leaf) {
-        Copy-Item -Path "hooks/pre-commit.sample" -Destination ".git/hooks/pre-commit" -Force
-        Write-Host "  - Git Hook 'pre-commit' instalado automaticamente em .git/hooks/pre-commit." -ForegroundColor Green
-    }
-    if (Test-Path -Path "hooks/post-merge.sample" -PathType Leaf) {
-        Copy-Item -Path "hooks/post-merge.sample" -Destination ".git/hooks/post-merge" -Force
-        Write-Host "  - Git Hook 'post-merge' instalado automaticamente em .git/hooks/post-merge." -ForegroundColor Green
+    if (Test-Path -Path ".git/hooks/post-merge" -PathType Leaf) {
+        Remove-Item -Path ".git/hooks/post-merge" -Force
+        Write-Host "  - Limpo hook antigo em .git/hooks/post-merge." -ForegroundColor DarkGray
     }
 }
 
 Write-Host "------------------------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "⚠ [AVISO DE CUIDADO] Editores como VS Code / Obsidian com 'Atomic Save' habilitado" -ForegroundColor Yellow
+Write-Host "⚠ [AVISO DE CUIDADO] Editores como VS Code / Obsidian com 'Atomic Save' habilitado," -ForegroundColor Yellow
+Write-Host "  e clientes de sincronização de nuvem (Dropbox/OneDrive/Google Drive/iCloud)," -ForegroundColor Yellow
 Write-Host "  podem deletar e recriar arquivos ao salvar, o que quebra o Hard Link físico." -ForegroundColor Yellow
 Write-Host "  Se AGENTS.md e CLAUDE.md divergirem em tamanho, re-execute este script." -ForegroundColor Yellow
 Write-Host "------------------------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "💡 Git Hooks úteis de validação automática foram configurados em '.git/hooks/'." -ForegroundColor Cyan
+Write-Host "💡 Git Hooks úteis de validação automática foram configurados para rodar a partir de 'hooks/'." -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host "✅ Configuração concluída com sucesso!" -ForegroundColor Green
 

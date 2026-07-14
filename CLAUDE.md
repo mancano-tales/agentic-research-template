@@ -18,6 +18,8 @@
   - [Componente 2]: [Função e caminhos de arquivo]
 - **Proibições Estritas (Standing Prohibitions)**:
   - Nunca execute `git add .` ou `git add -A`. Apenas adicione os arquivos específicos modificados (`git add <file>`).
+  - **[PLACEHOLDER - PROTEÇÃO DE AUTORIA]**: Se este projeto tem um diretório de autoria humana primária (prosa, notebooks de pesquisa, etc.) onde edições não devem ser comitadas silenciosamente por agentes, declare-o aqui nomeadamente. Exemplo: "Nunca faça commit na pasta `textos/` sem aprovação humana."
+  - **[PLACEHOLDER - PROTEÇÃO DE EXTERNOS]**: Se este projeto tem um arquivo gerenciado por uma ferramenta externa (biblioteca de citação, schema gerado, lockfile), proíba EDIÇÃO manual por agentes aqui — mas note explicitamente que comitar esse arquivo sem editá-lo é seguro (a distinção entre 'não editar' e 'não comitar' gera confusão). Exemplo: "Nunca edite manualmente o arquivo `zotero.bib`."
   - [Adicione outras proibições do seu projeto aqui...]
 - **Planos ativos**: consulte o índice de status em `9-vers/plan/README.md`.
 
@@ -46,6 +48,7 @@
 - **Commits Permitidos**: Os agentes de IA estão autorizados a fazer commits diretamente no repositório.
 - **Política de Staging Cirúrgico**: Agentes **NUNCA** devem utilizar `git add .`. Devem adicionar cirurgicamente apenas os arquivos nos quais trabalharam (ex: `git add src/main.js`). Isso preserva o trabalho em andamento do autor humano.
 - **Synchronized Commit Policy (Co-committing)**: Cada commit contendo mudanças de funcionalidade ou documentação deve obrigatoriamente incluir a atualização do [NEWS.md](NEWS.md) (e o status do plano em `9-vers/plan/README.md` se aplicável) na *mesma transação de commit*. Todo log de agente no `NEWS.md` deve terminar com o bloco **Metadados de Execução**:
+  - **Timestamp rigor**: a data isolada não é suficiente. Todo timestamp nos artefatos de governança deste repositório — o cabeçalho de entrada no `NEWS.md` (`## YYYY-MM-DD HH:MM — Título`), o campo `**Data/Hora**` no bloco de Metadados de Execução abaixo, e os campos YAML `criado`/`concluido` em `9-vers/plan/*.md` — **devem incluir hora e minuto**, no formato `YYYY-MM-DD HH:MM`, [seu fuso horário local]. Se a hora exata não puder ser recuperada confiavelmente do log da sessão, deixe apenas a data e explique o motivo em um comentário — nunca invente um horário.
   ```markdown
   **Metadados de Execução**:
   - **Data/Hora**: YYYY-MM-DD HH:MM (Horário Local)

@@ -33,8 +33,8 @@ Isso criará automaticamente o hard link para `AGENTS.md` (OpenAI/Codex) e o lin
 │   └── skills/                      # Scripts e instruções estendidas para agentes (ex: exportar-conversa)
 ├── .agents/                         # Atalho local (junction NTFS) apontando para .claude/ (gitignorado)
 ├── hooks/                           # Modelos de Git Hooks para automação e validação de commits
-│   ├── pre-commit.sample            # Hook pre-commit (valida status e cobra NEWS.md)
-│   └── post-merge.sample            # Hook post-merge (recria junctions e links físicos)
+│   ├── pre-commit                   # Hook pre-commit (valida status e cobra NEWS.md)
+│   └── post-merge                   # Hook post-merge (recria junctions e links físicos)
 ├── tools/                           # Scripts de utilidade geral e QA do repositório
 │   ├── validate-governance.R        # Validador de integridade de metadados de planos (R)
 │   └── export_conversa.R            # Extrator de logs de sessões de IA para Markdown (R)
@@ -66,22 +66,12 @@ Isso criará automaticamente o hard link para `AGENTS.md` (OpenAI/Codex) e o lin
 
 ## 4. Instalando Git Hooks de Governança
 
-Para automatizar a verificação local e evitar erros em commits:
+Para automatizar a verificação local e evitar erros em commits, os hooks agora são versionados diretamente na pasta `hooks/`.
 
-*   **No Linux/macOS:**
+Eles já são ativados automaticamente ao rodar o Setup Rápido (Seção 1). Se precisar ativá-los manualmente:
+
+*   **No Linux/macOS ou Windows:**
     ```bash
-    cp hooks/pre-commit.sample .git/hooks/pre-commit
-    cp hooks/post-merge.sample .git/hooks/post-merge
-    chmod +x .git/hooks/pre-commit .git/hooks/post-merge
-    ```
-*   **No Windows (Git Bash):**
-    ```bash
-    cp hooks/pre-commit.sample .git/hooks/pre-commit
-    cp hooks/post-merge.sample .git/hooks/post-merge
-    ```
-*   **No Windows (PowerShell - Administrador):**
-    ```powershell
-    Copy-Item hooks/pre-commit.sample .git/hooks/pre-commit
-    Copy-Item hooks/post-merge.sample .git/hooks/post-merge
+    git config core.hooksPath hooks
     ```
 

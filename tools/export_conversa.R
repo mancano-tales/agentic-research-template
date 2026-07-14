@@ -12,17 +12,26 @@
 
 suppressPackageStartupMessages(library(jsonlite))
 
+get_claude_project_dir_name <- function() {
+  wd <- getwd()
+  # Claude translates e.g. "C-slash-Users-slash-Mancano..." to "c--Users-Mancano..."
+  drive <- tolower(substr(wd, 1, 1))
+  rest <- substr(wd, 4, nchar(wd))
+  rest <- gsub("[/\\\\]", "-", rest)
+  paste0(drive, "--", rest)
+}
+
 PASTA_SESSOES <- file.path(
   Sys.getenv("USERPROFILE", unset = path.expand("~")),
   ".claude", "projects",
-  "c--Users-Mancano-Documents-MancanoSync-Mancano2026-MA-Thesis"
+  get_claude_project_dir_name()
 )
 PASTA_ANTIGRAVITY <- file.path(
   Sys.getenv("USERPROFILE", unset = path.expand("~")),
   ".gemini", "antigravity", "brain"
 )
-PASTA_SAIDA <- "C:/Users/Mancano/Documents/MancanoSync/Mancano2026-MA-Thesis/9-vers/llm-reviews"
-FUSO        <- "America/Sao_Paulo"
+PASTA_SAIDA <- file.path(getwd(), "9-vers", "llm-reviews")
+FUSO <- "America/Sao_Paulo"
 
 # ── Argumentos ────────────────────────────────────────────────────────────────
 args <- commandArgs(trailingOnly = TRUE)
@@ -63,11 +72,11 @@ if (file.exists(alvo)) {
       stop("UUID ambíguo no Antigravity (", length(match_dirs), " sessões): ", alvo)
     }
   }
-  
+
   # 2. Procurar no Claude Code
   candidatos_claude <- list.files(PASTA_SESSOES, pattern = "\\.jsonl$", full.names = TRUE)
   hit_claude <- candidatos_claude[startsWith(basename(candidatos_claude), alvo)]
-  
+
   if (!is.null(hit_antigravity)) {
     arquivo_jsonl <- hit_antigravity
     uuid_sessao <- basename(dirname(dirname(dirname(arquivo_jsonl))))
@@ -88,7 +97,10 @@ n_mal_formadas <- 0L
 for (i in seq_along(linhas)) {
   registros[[i]] <- tryCatch(
     fromJSON(linhas[[i]], simplifyVector = FALSE),
-    error = function(e) { n_mal_formadas <<- n_mal_formadas + 1L; NULL }
+    error = function(e) {
+      n_mal_formadas <<- n_mal_formadas + 1L
+      NULL
+    }
   )
 }
 registros <- Filter(Negate(is.null), registros)
@@ -117,7 +129,8 @@ cerca <- function(txt) {
 
 bloco_details <- function(rotulo, corpo, linguagem = "") {
   f <- cerca(corpo)
-  c("<details>",
+  c(
+    "<details>",
     paste0("<summary>", rotulo, "</summary>"),
     "",
     paste0(f, linguagem),
@@ -125,16 +138,23 @@ bloco_details <- function(rotulo, corpo, linguagem = "") {
     f,
     "",
     "</details>",
-    "")
+    ""
+  )
 }
 
 texto_de_tool_result <- function(conteudo) {
-  if (is.character(conteudo)) return(paste(conteudo, collapse = "\n"))
+  if (is.character(conteudo)) {
+    return(paste(conteudo, collapse = "\n"))
+  }
   if (is.list(conteudo)) {
     partes <- vapply(conteudo, function(b) {
-      if (is.list(b) && identical(b$type, "text") && !is.null(b$text)) b$text
-      else if (is.character(b)) paste(b, collapse = "\n")
-      else paste0("[bloco ", if (is.list(b)) b$type %||% "?" else "?", "]")
+      if (is.list(b) && identical(b$type, "text") && !is.null(b$text)) {
+        b$text
+      } else if (is.character(b)) {
+        paste(b, collapse = "\n")
+      } else {
+        paste0("[bloco ", if (is.list(b)) b$type %||% "?" else "?", "]")
+      }
     }, character(1))
     return(paste(partes, collapse = "\n"))
   }
@@ -151,11 +171,14 @@ slug_kebab <- function(x) {
 
 # ── Varredura de metadados ────────────────────────────────────────────────────
 ai_title <- NA_character_
-modelo   <- NA_character_
-versao   <- NA_character_
-branch   <- NA_character_
-ts_ini   <- NULL; ts_fim <- NULL
-n_user <- 0L; n_asst <- 0L; n_tools <- 0L
+modelo <- NA_character_
+versao <- NA_character_
+branch <- NA_character_
+ts_ini <- NULL
+ts_fim <- NULL
+n_user <- 0L
+n_asst <- 0L
+n_tools <- 0L
 
 if (is_antigravity) {
   for (r in registros) {
@@ -176,10 +199,13 @@ if (is_antigravity) {
     }
   }
   versao <- "2.0 (Antigravity)"
-  branch <- tryCatch({
-    system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
-  }, error = function(e) "main")
-  
+  branch <- tryCatch(
+    {
+      system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
+    },
+    error = function(e) "main"
+  )
+
   for (r in registros) {
     if (!is.null(r$created_at)) {
       t <- parse_ts(r$created_at)
@@ -207,8 +233,8 @@ if (is_antigravity) {
     }
     if (identical(r$type, "assistant")) {
       if (is.na(modelo) && !is.null(r$message$model)) modelo <- r$message$model
-      if (is.na(versao) && !is.null(r$version))       versao <- r$version
-      if (is.na(branch) && !is.null(r$gitBranch))     branch <- r$gitBranch
+      if (is.na(versao) && !is.null(r$version)) versao <- r$version
+      if (is.na(branch) && !is.null(r$gitBranch)) branch <- r$gitBranch
       cont <- r$message$content
       if (is.list(cont)) {
         tipos <- vapply(cont, function(b) b$type %||% "", character(1))
@@ -226,13 +252,18 @@ if (is_antigravity) {
 
 if (is.null(ts_ini)) stop("Nenhuma mensagem com timestamp/created_at encontrada no arquivo.")
 
-slug <- if (!is.na(slug_arg)) slug_kebab(slug_arg) else
-  if (!is.na(ai_title)) slug_kebab(ai_title) else
-    paste0("sessao-", substr(uuid_sessao, 1, 8))
+slug <- if (!is.na(slug_arg)) {
+  slug_kebab(slug_arg)
+} else if (!is.na(ai_title)) {
+  slug_kebab(ai_title)
+} else {
+  paste0("sessao-", substr(uuid_sessao, 1, 8))
+}
 if (slug == "") slug <- paste0("sessao-", substr(uuid_sessao, 1, 8))
 
 # ── Corpo ─────────────────────────────────────────────────────────────────────
-buf <- new.env(); buf$linhas <- vector("list", 0L)
+buf <- new.env()
+buf$linhas <- vector("list", 0L)
 push <- function(...) {
   novas <- unlist(list(...), use.names = FALSE)
   buf$linhas[[length(buf$linhas) + 1L]] <- novas
@@ -246,20 +277,26 @@ if (is_antigravity) {
     "",
     paste0("> **Sessão**: `", uuid_sessao, "`  "),
     paste0("> **Fonte**: `", normalizePath(arquivo_jsonl, winslash = "/"), "`  "),
-    paste0("> **Início**: ", fmt_local(ts_ini), " — **Fim**: ", fmt_local(ts_fim),
-           " (", FUSO, "; duração ", round(as.numeric(dur), 1), " h)  "),
-    paste0("> **Modelo**: ", modelo, " — Antigravity ", versao,
-           " — branch `", branch, "`  "),
-    paste0("> **Volume**: ", n_user, " mensagens do usuário, ", n_asst,
-           " respostas do assistente, ", n_tools, " chamadas de ferramenta.  "),
+    paste0(
+      "> **Início**: ", fmt_local(ts_ini), " — **Fim**: ", fmt_local(ts_fim),
+      " (", FUSO, "; duração ", round(as.numeric(dur), 1), " h)  "
+    ),
+    paste0(
+      "> **Modelo**: ", modelo, " — Antigravity ", versao,
+      " — branch `", branch, "`  "
+    ),
+    paste0(
+      "> **Volume**: ", n_user, " mensagens do usuário, ", n_asst,
+      " respostas do assistente, ", n_tools, " chamadas de ferramenta.  "
+    ),
     paste0("> Exportado em ", fmt_local(Sys.time()), " por `export_conversa.R`."),
     ""
   )
-  
+
   papel_atual <- ""
   for (r in registros) {
     ts_txt <- if (!is.null(r$created_at)) fmt_local(parse_ts(r$created_at)) else "sem hora"
-    
+
     if (identical(r$type, "USER_INPUT")) {
       if (nzchar(papel_atual)) push("---", "")
       push(paste0("### [", ts_txt, "] Usuário"), "", r$content, "")
@@ -276,7 +313,7 @@ if (is_antigravity) {
         push(paste0("### [", ts_txt, "] Antigravity (Chamadas de ferramenta)"), "")
       }
       papel_atual <- "Antigravity"
-      
+
       if (!is.null(r$tool_calls) && length(r$tool_calls) > 0) {
         for (tc in r$tool_calls) {
           nome <- tc$name %||% "?"
@@ -300,31 +337,41 @@ if (is_antigravity) {
     "",
     paste0("> **Sessão**: `", uuid_sessao, "`  "),
     paste0("> **Fonte**: `", normalizePath(arquivo_jsonl, winslash = "/"), "`  "),
-    paste0("> **Início**: ", fmt_local(ts_ini), " — **Fim**: ", fmt_local(ts_fim),
-           " (", FUSO, "; duração ", round(as.numeric(dur), 1), " h)  "),
-    paste0("> **Modelo**: ", modelo, " — Claude Code ", versao,
-           " — branch `", branch, "`  "),
-    paste0("> **Volume**: ", n_user, " mensagens do usuário, ", n_asst,
-           " respostas do assistente, ", n_tools, " chamadas de ferramenta.  "),
+    paste0(
+      "> **Início**: ", fmt_local(ts_ini), " — **Fim**: ", fmt_local(ts_fim),
+      " (", FUSO, "; duração ", round(as.numeric(dur), 1), " h)  "
+    ),
+    paste0(
+      "> **Modelo**: ", modelo, " — Claude Code ", versao,
+      " — branch `", branch, "`  "
+    ),
+    paste0(
+      "> **Volume**: ", n_user, " mensagens do usuário, ", n_asst,
+      " respostas do assistente, ", n_tools, " chamadas de ferramenta.  "
+    ),
     paste0("> Exportado em ", fmt_local(Sys.time()), " por `export_conversa.R`."),
     ""
   )
-  
+
   papel_atual <- ""
   for (r in registros) {
     if (!identical(r$type, "user") && !identical(r$type, "assistant")) next
     if (is.null(r$message)) next
     cont <- r$message$content
     ts_txt <- if (!is.null(r$timestamp)) fmt_local(parse_ts(r$timestamp)) else "sem hora"
-    
+
     eh_compact <- isTRUE(r$isCompactSummary)
     so_tool_result <- is.list(cont) && length(cont) > 0 &&
       all(vapply(cont, function(b) identical(b$type %||% "", "tool_result"), logical(1)))
-    papel <- if (identical(r$type, "assistant")) "Claude"
-             else if (so_tool_result) papel_atual
-             else "Usuário"
+    papel <- if (identical(r$type, "assistant")) {
+      "Claude"
+    } else if (so_tool_result) {
+      papel_atual
+    } else {
+      "Usuário"
+    }
     if (isTRUE(r$isSidechain)) papel <- paste0(papel, " (subagente)")
-    
+
     if (eh_compact) {
       if (nzchar(papel_atual)) push("---", "")
       push(paste0("## 📦 [", ts_txt, "] Resumo de compactação de contexto"), "")
@@ -334,7 +381,7 @@ if (is_antigravity) {
       push(paste0("### [", ts_txt, "] ", papel), "")
       papel_atual <- papel
     }
-    
+
     if (is.character(cont)) {
       txt <- paste(cont, collapse = "\n")
       if (grepl("<command-name>|<local-command", txt)) {
@@ -345,7 +392,7 @@ if (is_antigravity) {
       next
     }
     if (!is.list(cont)) next
-    
+
     for (b in cont) {
       tipo <- b$type %||% ""
       if (tipo == "text") {
@@ -354,9 +401,11 @@ if (is_antigravity) {
       } else if (tipo == "thinking") {
         corpo <- b$thinking %||% ""
         if (nzchar(trimws(corpo))) {
-          push("<details>",
-               "<summary>🧠 Raciocínio interno</summary>",
-               "", corpo, "", "</details>", "")
+          push(
+            "<details>",
+            "<summary>🧠 Raciocínio interno</summary>",
+            "", corpo, "", "</details>", ""
+          )
         }
       } else if (tipo == "tool_use") {
         nome <- b$name %||% "?"
