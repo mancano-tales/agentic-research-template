@@ -1,11 +1,11 @@
 ---
-name: finalizar-tarefa
+name: close-task
 description: Cerimônia completa de encerramento de tarefa. Executa todo o workflow de auditoria: marca planos como concluídos, escreve no NEWS.md, atualiza o inventário de logs, exporta a conversa da sessão atual e faz o commit seguro. Só rodar uma vez no final definitivo da sessão.
 ---
 
-# Cerimônia de Encerramento (Finalizar Tarefa)
+# Cerimônia de Encerramento (Close Task)
 
-Esta skill define o Procedimento Operacional Padrão (SOP) que todo agente deve seguir estritamente quando o usuário solicitar o encerramento ou finalização de uma tarefa.
+Esta skill define o Procedimento Operacional Padrão (SOP) que todo agente deve seguir estritamente quando o usuário solicitar o encerramento ou finalização de uma tarefa. Esta skill é **idêntica em todo repositório que a usa** — qualquer particularidade deste projeto (caminho do script de exportação, pasta de autoria protegida) vem de `CLAUDE.md` § "Configuração de Skills", nunca hardcoded aqui.
 
 **ATENÇÃO CRÍTICA**: Esta skill só deve ser executada **UMA ÚNICA VEZ**, no fim definitivo da conversa/sessão. Nunca a rode a cada mensagem, pois o script de exportação cria múltiplas cópias do histórico se invocado repetidamente.
 
@@ -41,12 +41,12 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
   - Assunto: Um parágrafo detalhado das decisões tomadas nesta sessão de trabalho.
 
 ## 4. Exportar a Conversa
-- Você deve exportar o registro desta sessão rodando o script utilitário existente (que suporta tanto Claude quanto Antigravity).
+- Você deve exportar o registro desta sessão rodando o script utilitário existente (que suporta tanto Claude quanto Antigravity). O caminho do script é a chave **`script_exportar_conversa`** em `CLAUDE.md` § "Configuração de Skills" deste repositório (se a chave não estiver preenchida, tente `tools/export_conversa.R`).
 - **Para Antigravity**: você tem o seu ID de conversa na variável de metadados do contexto (ex: `071f9430-...`).
 - **Para Claude**: você pode inferir o UUID a partir do seu scratchpad.
-- Execute no terminal (completando o seu ID da sessão atual e um slug amigável e conciso de até 4 palavras):
+- Execute no terminal (completando o caminho do script, o seu ID da sessão atual e um slug amigável e conciso de até 4 palavras):
   ```bash
-  Rscript tools/export_conversa.R <SEU-ID-DE-SESSAO> <um-slug-descritivo-em-kebab-case>
+  Rscript <script_exportar_conversa> <SEU-ID-DE-SESSAO> <um-slug-descritivo-em-kebab-case>
   ```
 - O script vai gerar o arquivo Markdown na pasta `9-vers/llm-reviews/` e imprimir o caminho absoluto no terminal. Verifique se o nome do arquivo gerado coincide com o que você registrou no inventário no Passo 3. Se não, corrija o inventário.
 
@@ -55,7 +55,7 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
   ```bash
   git add <caminho1> <caminho2> ...
   ```
-  **Se o repositório definir diretórios de Autoria Primária (ex. textos, prosas) protegidos contra agentes (conforme configurado no `CLAUDE.md`), NÃO comite mudanças neles mesmo que tenham sido feitas por você.** Avise o usuário que ficaram fora do commit.
+  **Consulte a chave `diretorio_autoria_primaria` em `CLAUDE.md` § "Configuração de Skills".** Se estiver preenchida e `git status` mostrar mudanças ali, NÃO as inclua no commit mesmo que tenham sido feitas por você — avise o usuário que ficaram fora do commit.
 - Sincronize o índice de planos (só isso — ver nota abaixo):
   ```bash
   Rscript tools/validate-governance.R --sync
@@ -65,7 +65,7 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
 ## 6. Commit (Tratamento de Concorrência)
 - Faça o commit das alterações **só com os arquivos stageados no passo 5** (nunca `git commit -a`), formatando a mensagem:
   ```bash
-  git commit -m "chore: finalização da tarefa <assunto-ou-slug>"
+  git commit -m "chore: <assunto-ou-slug-da-tarefa>"
   ```
 - O hook `pre-commit` roda `Rscript tools/validate-governance.R` (T1-T6) neste momento. Se ele bloquear o commit, corrija o problema apontado — não contorne com `--no-verify` sem autorização explícita do usuário nesta conversa.
 - **Tratamento de Concorrência e Index.Lock**: como trabalhamos num ecossistema multiagente, o Git pode acusar que `.git/index.lock` já existe. Isso **não é um erro lógico ou sintático** — só significa que outro processo git está em andamento. Trate assim, com limite:
@@ -73,4 +73,4 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
   2. Repita no máximo **3 vezes** (~15 segundos no total).
   3. Se o lock ainda existir depois disso, **PARE e avise o usuário** — não conclua sozinho que o lock está órfão, e **nunca apague `.git/index.lock` por conta própria**. Um lock órfão (processo travado/morto) parece idêntico a um lock ativo do ponto de vista do agente; distinguir os dois exige checar processos em execução (`tasklist`/`ps`) e a idade do arquivo, e a decisão de remover é do usuário.
 
-Ao finalizar todos os 6 passos com sucesso, comunique ao usuário que a tarefa foi encerrada e que o repositório está limpo, logado, e o commit da sessão foi realizado. Liste explicitamente qualquer arquivo que ficou de fora do commit (ex.: textos não autorizados) e por quê. Pode então aguardar o encerramento da conversa.
+Ao finalizar todos os 6 passos com sucesso, comunique ao usuário que a tarefa foi encerrada e que o repositório está limpo, logado, e o commit da sessão foi realizado. Liste explicitamente qualquer arquivo que ficou de fora do commit (ex.: caminhos protegidos por `diretorio_autoria_primaria`) e por quê. Pode então aguardar o encerramento da conversa.

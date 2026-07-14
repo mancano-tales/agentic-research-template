@@ -4,9 +4,11 @@
 .DESCRIPTION
     Compara as skills locais (.claude/skills/*) com as do repositório mãe (por padrão,
     a pasta irmã 'agentic-research-template') e reporta o que está desatualizado ou
-    faltando. Por padrão roda em modo dry-run (só relatório) — nada é escrito no disco
-    sem -Apply. Nunca commita: só deixa a mudança no working tree, para revisão e
-    'git add' explícito (Strict Staging Policy).
+    faltando. Compara a PASTA inteira de cada skill (SKILL.md e quaisquer arquivos
+    auxiliares, ex.: scripts/), não só o SKILL.md — skills como pdf-text-extractor
+    têm scripts junto. Por padrão roda em modo dry-run (só relatório) — nada é escrito
+    no disco sem -Apply. Nunca commita: só deixa a mudança no working tree, para
+    revisão e 'git add' explícito (Strict Staging Policy).
 .PARAMETER Apply
     Nome de uma skill específica para puxar da mãe, ou 'all' para puxar todas as que
     estiverem desatualizadas ou faltando. Sem este parâmetro, roda só o relatório.
@@ -43,6 +45,24 @@ function Resolve-SkillsSource {
     return (Join-Path $siblingDir "agentic-research-template")
 }
 
+# Hash combinado de uma pasta inteira: concatena "caminho-relativo:hash" de cada
+# arquivo, ordenado, e hasheia o resultado. Pega adição/remoção/modificação de
+# qualquer arquivo dentro da pasta da skill, não só o SKILL.md.
+function Get-FolderHash {
+    param([string]$FolderPath)
+    if (-not (Test-Path -Path $FolderPath -PathType Container)) { return $null }
+    $files = Get-ChildItem -Path $FolderPath -Recurse -File | Sort-Object FullName
+    if ($files.Count -eq 0) { return $null }
+    $combined = ($files | ForEach-Object {
+        $rel = $_.FullName.Substring($FolderPath.Length).Replace("\", "/")
+        $h = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+        "$rel`:$h"
+    }) -join "|"
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($combined)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    return [System.BitConverter]::ToString($sha.ComputeHash($bytes)).Replace("-", "")
+}
+
 $SourceRoot = Resolve-SkillsSource -Override $SourcePath
 
 if ((Resolve-Path $SourceRoot -ErrorAction SilentlyContinue).Path -eq (Resolve-Path $RepoRoot -ErrorAction SilentlyContinue).Path) {
@@ -63,7 +83,7 @@ if (-not (Test-Path -Path $LocalSkillsDir -PathType Container)) {
     New-Item -ItemType Directory -Path $LocalSkillsDir -Force | Out-Null
 }
 
-# 2. Comparar cada skill da mãe com a versão local (hash do SKILL.md)
+# 2. Comparar cada skill da mãe com a versão local (hash da pasta inteira)
 Write-Host "🔄 Comparando skills locais com a mãe em: $SourceRoot" -ForegroundColor Cyan
 Write-Host ""
 
@@ -72,23 +92,20 @@ $toApply = @()
 
 foreach ($skill in $motherSkills) {
     $name = $skill.Name
-    $motherFile = Join-Path $skill.FullName "SKILL.md"
-    if (-not (Test-Path -Path $motherFile -PathType Leaf)) { continue }
+    $motherHash = Get-FolderHash -FolderPath $skill.FullName
+    if ($null -eq $motherHash) { continue }
 
-    $localFile = Join-Path $LocalSkillsDir "$name\SKILL.md"
-    $motherHash = (Get-FileHash -Path $motherFile -Algorithm SHA256).Hash
+    $localDir = Join-Path $LocalSkillsDir $name
+    $localHash = Get-FolderHash -FolderPath $localDir
 
-    if (-not (Test-Path -Path $localFile -PathType Leaf)) {
+    if ($null -eq $localHash) {
         Write-Host ("  {0,-28} NOVA (não instalada)" -f $name) -ForegroundColor Yellow
         $toApply += @{ Name = $name; Status = "nova" }
+    } elseif ($localHash -eq $motherHash) {
+        Write-Host ("  {0,-28} em dia" -f $name) -ForegroundColor Green
     } else {
-        $localHash = (Get-FileHash -Path $localFile -Algorithm SHA256).Hash
-        if ($localHash -eq $motherHash) {
-            Write-Host ("  {0,-28} em dia" -f $name) -ForegroundColor Green
-        } else {
-            Write-Host ("  {0,-28} desatualizada" -f $name) -ForegroundColor Yellow
-            $toApply += @{ Name = $name; Status = "desatualizada" }
-        }
+        Write-Host ("  {0,-28} desatualizada" -f $name) -ForegroundColor Yellow
+        $toApply += @{ Name = $name; Status = "desatualizada" }
     }
 }
 
@@ -111,12 +128,13 @@ if ($targets.Count -eq 0) {
 }
 
 foreach ($t in $targets) {
-    $src = Join-Path $SourceSkillsDir "$($t.Name)\SKILL.md"
+    $srcDir = Join-Path $SourceSkillsDir $t.Name
     $destDir = Join-Path $LocalSkillsDir $t.Name
-    if (-not (Test-Path -Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-    $dest = Join-Path $destDir "SKILL.md"
-    Copy-Item -Path $src -Destination $dest -Force
-    Write-Host "  ✅ '$($t.Name)' copiada da mãe." -ForegroundColor Green
+    # Espelha a pasta inteira: remove o destino antes de copiar, para que arquivos
+    # removidos na mãe (ex.: um script descontinuado) também somem localmente.
+    if (Test-Path -Path $destDir) { Remove-Item -Path $destDir -Recurse -Force }
+    Copy-Item -Path $srcDir -Destination $destDir -Recurse -Force
+    Write-Host "  ✅ '$($t.Name)' copiada da mãe (pasta inteira)." -ForegroundColor Green
 }
 
 Write-Host ""

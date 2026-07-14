@@ -30,7 +30,7 @@ Isso criará automaticamente o hard link para `AGENTS.md` (OpenAI/Codex) e o lin
 ```
 [seu-repositório]/
 ├── .claude/                         # Pasta unificada de customizações e skills compartilhadas de IAs
-│   └── skills/                      # Scripts e instruções estendidas para agentes (ex: exportar-conversa)
+│   └── skills/                      # Scripts e instruções estendidas para agentes (ex: export-conversation)
 ├── .agents/                         # Atalho local (junction NTFS) apontando para .claude/ (gitignorado)
 ├── hooks/                           # Modelos de Git Hooks para automação e validação de commits
 │   ├── pre-commit                   # Hook pre-commit (valida status e cobra NEWS.md)

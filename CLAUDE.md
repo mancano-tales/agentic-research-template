@@ -73,7 +73,22 @@
 
 ## Skills Compartilhadas Entre Projetos
 
-Este template é o **repositório mãe** de um conjunto de skills de governança (`finalizar-tarefa`, `request-audit`, `exportar-conversa`, `limpar-pendencias-git`, `sincronizar-skills`) usadas por vários projetos correlatos. Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório por padrão; `-Apply <skill>` para aplicar) ou pela skill `sincronizar-skills`, que envolve o script com a cerimônia de revisão e commit explícito — nunca há sincronização automática/silenciosa nem link físico entre repositórios (junctions/symlinks entre repositórios distintos já se mostraram frágeis sob renomeação de pasta e sincronização de nuvem). Se este projeto **é** o repositório mãe, edite as skills direto em `.claude/skills/`; se é um consumidor, veja `.claude/skills/sincronizar-skills/SKILL.md` para o fluxo completo, incluindo como promover uma skill local de volta para a mãe.
+Este template é o **repositório mãe** de um conjunto de skills de governança (`close-task`, `request-audit`, `export-conversation`, `git-cleanup`, `sync-skills`, `pdf-text-extractor`) usadas por vários projetos correlatos. **Regra de design**: essas skills são **byte-idênticas** em todo repositório que as usa — nunca hardcodeiam caminho, nome de arquivo ou convenção específica de um projeto. Qualquer particularidade de repositório que uma skill precise (qual pasta é de autoria humana protegida, qual arquivo é gerenciado externamente, etc.) vem da seção **"Configuração de Skills"** abaixo, nunca do texto da própria skill — isso é o que permite comparar skills por hash entre repositórios e ter um sinal de "em dia"/"desatualizada" que significa alguma coisa de verdade (ver histórico da decisão em `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md`).
+
+Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório por padrão; `-Apply <skill>` para aplicar) ou pela skill `sync-skills`, que envolve o script com a cerimônia de revisão e commit explícito — nunca há sincronização automática/silenciosa nem link físico entre repositórios (junctions/symlinks entre repositórios distintos já se mostraram frágeis sob renomeação de pasta e sincronização de nuvem). O script compara a **pasta inteira** de cada skill (não só o `SKILL.md`) — algumas skills, como `pdf-text-extractor`, têm scripts auxiliares junto. Se este projeto **é** o repositório mãe, edite as skills direto em `.claude/skills/`; se é um consumidor, veja `.claude/skills/sync-skills/SKILL.md` para o fluxo completo, incluindo como promover uma skill local de volta para a mãe.
+
+---
+
+## Configuração de Skills (Skill Configuration)
+
+> As skills genéricas acima consultam esta seção para qualquer dado específico deste repositório — nunca hardcodeiam. **As chaves (o que existe) são definidas pelas skills; o valor de cada linha é deste projeto.** Preencha ao adotar o template; deixe em branco/`[PLACEHOLDER]` se não se aplicar.
+
+| Chave | Usada por | Valor neste repositório |
+|---|---|---|
+| `diretorio_autoria_primaria` | `close-task`, `git-cleanup` | [PLACEHOLDER — se este projeto tem uma pasta de prosa/notebooks de autoria humana que agentes não devem comitar sem autorização, declare o caminho aqui] |
+| `arquivo_gerenciado_externamente` | `git-cleanup` | [PLACEHOLDER — se algum arquivo é escrito por uma ferramenta externa (biblioteca de citação, lockfile, schema gerado) e agentes nunca devem editá-lo manualmente, declare o caminho aqui] |
+| `script_exportar_conversa` | `close-task`, `export-conversation` | `tools/export_conversa.R` (padrão do template — ajuste se movido) |
+| `diretorios_trabalho_continuo` | `git-cleanup` | [PLACEHOLDER — pastas onde commits em série/numerados são normais (ex.: scripts de análise por sessão), para agrupar em vez de tratar cada arquivo isolado] |
 
 ---
 

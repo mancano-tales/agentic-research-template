@@ -1,9 +1,11 @@
 ---
-name: exportar-conversa
-description: Exporta a conversa atual (ou uma sessão passada) do Claude Code ou Antigravity como Markdown completo — com timestamps de Brasília, thinking e chamadas de ferramentas em seções recolhíveis — para 9-vers/llm-reviews/ usando o script R.
+name: export-conversation
+description: Exporta a conversa atual (ou uma sessão passada) do Claude Code ou Antigravity como Markdown completo — com timestamps, thinking e chamadas de ferramentas em seções recolhíveis — para 9-vers/llm-reviews/ usando o script R.
 ---
 
 # Exportar conversa para 9-vers/llm-reviews/
+
+Esta skill é **idêntica em todo repositório que a usa**. O único dado específico deste projeto que ela consome é o caminho do script (chave `script_exportar_conversa` em `CLAUDE.md` § "Configuração de Skills").
 
 ## O que fazer
 
@@ -14,9 +16,9 @@ description: Exporta a conversa atual (ou uma sessão passada) do Claude Code ou
    - Caso contrário, é o **slug** para o nome do arquivo (descreva o tema da conversa em kebab-case se o usuário deu texto livre).
    - Sem argumento: exporte a sessão atual e crie você mesmo um slug curto (3–5 palavras) que resuma os temas da conversa.
 
-3. **Rode o script**:
+3. **Rode o script**, usando o caminho da chave `script_exportar_conversa` em `CLAUDE.md` § "Configuração de Skills" (se não estiver preenchida, tente `tools/export_conversa.R`):
    ```bash
-   Rscript tools/export_conversa.R <uuid-ou-caminho> [slug]
+   Rscript <script_exportar_conversa> <uuid-ou-caminho> [slug]
    ```
 
 4. **Reporte ao usuário**: o caminho do arquivo gerado, o período coberto e as contagens que o script imprime. Avise que o export reflete o que está gravado em disco no momento da execução — mensagens posteriores (inclusive esta troca final) só entram se a skill for rodada de novo ao fim da conversa.

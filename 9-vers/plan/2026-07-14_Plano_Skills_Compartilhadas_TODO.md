@@ -17,9 +17,10 @@ tarefas:
   - { desc: "Criar tools/sync-skills.ps1 e .sh (relatório dry-run + --apply, sem commit automático)", status: concluida, data: "2026-07-14 09:50" }
   - { desc: "Criar skill sincronizar-skills (camada de julgamento sobre o script mecânico)", status: concluida, data: "2026-07-14 09:55" }
   - { desc: "Documentar em CLAUDE.md/AGENTS.md: convenção de TODO.md e fluxo de sync-skills", status: concluida, data: "2026-07-14 09:58" }
-  - { desc: "Portar o mecanismo para Mancano2026-MA-Thesis (TODO.md novo, sync-skills copiado)", status: pendente, data: null }
-  - { desc: "Reconciliar Nahoum-Mancano-2026-Antitrust (TODO.md reformatado preservando conteúdo, sync-skills copiado, teste --apply real)", status: pendente, data: null }
-  - { desc: "Alinhar agentic-institutionalism (TODO.md fresco, sem histórico a preservar)", status: pendente, data: null }
+  - { desc: "Portar o mecanismo para Mancano2026-MA-Thesis (TODO.md novo, sync-skills copiado)", status: concluida, data: "2026-07-14 10:05" }
+  - { desc: "Reconciliar Nahoum-Mancano-2026-Antitrust (TODO.md reformatado preservando conteúdo, sync-skills copiado, teste --apply real)", status: concluida, data: "2026-07-14 10:15" }
+  - { desc: "Alinhar agentic-institutionalism (TODO.md fresco, sem histórico a preservar)", status: concluida, data: "2026-07-14 10:20" }
+  - { desc: "Segunda rodada: renomear todas as skills para inglês, torná-las config-driven (sem hardcode de repositório), adicionar pdf-text-extractor ao mecanismo compartilhado, criar seção Configuração de Skills em CLAUDE.md", status: concluida, data: "2026-07-14 11:15" }
 relacionados:
   - "2026-07-13_Plano_Sincronizar_Governanca_Com_Tese.md"
 news: ["2026-07-14"]
@@ -64,4 +65,30 @@ Antes de desenhar do zero, uma investigação encontrou trabalho concorrente já
 
 1. `Rscript tools/validate-governance.R` limpo, sem o aviso de junction quebrada.
 2. `.\tools\sync-skills.ps1` rodado dentro deste próprio repositório retorna o aviso "já é a mãe" e sai sem erro (testado).
-3. Pendente: rodar o mesmo script a partir de `Mancano2026-MA-Thesis` e `Nahoum-Mancano-2026-Antitrust` (tarefas 8-9) e confirmar que o relatório reflete o estado real de cada um.
+3. `Mancano2026-MA-Thesis` e `Nahoum-Mancano-2026-Antitrust`: `sync-skills` testado de ponta a ponta, incluindo `--apply` real em `Nahoum-Mancano-2026-Antitrust` (`request-audit`, byte-idêntico confirmado, nada commitado sozinho). Ver detalhe completo no `NEWS.md` de cada repositório.
+
+---
+
+## Segunda rodada (2026-07-14) — renomeio para inglês e refatoração config-driven
+
+O autor revisou o trabalho da primeira rodada e apontou um problema real: as skills compartilhadas (`finalizar-tarefa`, `limpar-pendencias-git`) tinham texto específico de cada projeto hardcoded (caminhos de `3-texts/`, nome exato do `.bib` da tese, `4-DA-Code/`), o que fazia o relatório do `sync-skills` marcá-las como "desatualizada" **permanentemente** nos repositórios consumidores — um sinal sem significado, já que a divergência nunca seria resolvida. Proposta do autor, adotada integralmente: as skills compartilhadas devem ser **byte-idênticas** em todo repositório; particularidades de projeto vivem só em `CLAUDE.md`, numa seção nova e explicitamente rotulada como "Configuração de Skills" — as skills apontam para lá por chave nomeada, nunca hardcodeiam.
+
+**Achado de suporte à mudança**: o `close-task` (então `finalizar-tarefa`) da própria mãe **já seguia esse padrão** num trecho (referência genérica a "diretórios de Autoria Primária... conforme configurado no CLAUDE.md") — a arquitetura certa já existia parcialmente, só não tinha sido aplicada de forma consistente nem formalizada como seção própria, e a tese nunca migrou sua cópia local para usar essa versão genérica.
+
+**Tarefas adicionais pedidas pelo autor, executadas na mesma rodada**:
+- Renomear todas as skills para nomes melhores em inglês.
+- Garantir que todas as skills, **inclusive `pdf-text-extractor`** (até então só na tese), estejam disponíveis em todos os repositórios do mecanismo.
+- Deixar explícito, no `CLAUDE.md`, que existe uma seção de configuração que as skills consomem.
+
+**Execução**:
+- `tools/sync-skills.ps1`/`.sh` reescritos: hash agora cobre a **pasta inteira** da skill (recursivo), não só `SKILL.md` — necessário porque `pdf-text-extractor` tem `scripts/extract_pdf.R` junto. `--apply` agora espelha a pasta inteira (remove e recopia), para que um arquivo removido na mãe também suma localmente.
+- Nova seção `## Configuração de Skills (Skill Configuration)` em `CLAUDE.md`, com tabela `Chave | Usada por | Valor neste repositório` e placeholders para as 4 chaves identificadas: `diretorio_autoria_primaria`, `arquivo_gerenciado_externamente`, `script_exportar_conversa`, `diretorios_trabalho_continuo`.
+- Skills renomeadas e reescritas para consumir essas chaves em vez de hardcode:
+  - `finalizar-tarefa` → **`close-task`** (referencia `script_exportar_conversa` e `diretorio_autoria_primaria`).
+  - `exportar-conversa` → **`export-conversation`** (referencia `script_exportar_conversa`).
+  - `limpar-pendencias-git` → **`git-cleanup`** (reescrita mais pesada — a lógica de "variantes com/sem `.qmd`", os padrões de agrupamento por `4-DA-Code/`, e o caso especial do `.bib` do Zotero viraram genéricos via `diretorio_autoria_primaria`, `diretorios_trabalho_continuo` e `arquivo_gerenciado_externamente`).
+  - `sincronizar-skills` → **`sync-skills`** (mesmo nome do script subjacente; auto-referências a `finalizar-tarefa` corrigidas para `close-task`; instruído a nunca deixar uma skill promovida com hardcode).
+  - `request-audit` e `pdf-text-extractor` mantidos (já em inglês; `request-audit` já não tinha hardcode nenhum, confirmado por grep antes de decidir não mexer).
+- `pdf-text-extractor` portado para a mãe (com `scripts/extract_pdf.R`) — não tinha hardcode de caminho, generalização mínima necessária.
+
+**Ainda pendente**: propagar o renomeio + `pdf-text-extractor` + seção de Configuração de Skills (com valores reais) para `Mancano2026-MA-Thesis` e `Nahoum-Mancano-2026-Antitrust`; verificar que as 6 skills compartilhadas ficam com hash de pasta idêntico entre os 3 repositórios.

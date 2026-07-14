@@ -4,14 +4,15 @@
 #
 # Compara as skills locais (.claude/skills/*) com as do repositório mãe (por padrão,
 # a pasta irmã 'agentic-research-template') e reporta o que está desatualizado ou
-# faltando. Por padrão roda em modo dry-run (só relatório) — nada é escrito no disco
-# sem --apply. Nunca commita: só deixa a mudança no working tree, para revisão e
-# 'git add' explícito (Strict Staging Policy).
+# faltando. Compara a PASTA inteira de cada skill (SKILL.md e arquivos auxiliares,
+# ex.: scripts/), não só o SKILL.md. Por padrão roda em modo dry-run (só relatório)
+# — nada é escrito no disco sem --apply. Nunca commita: só deixa a mudança no
+# working tree, para revisão e 'git add' explícito (Strict Staging Policy).
 #
 # Uso:
-#   tools/sync-skills.sh                       # relatório (dry-run)
-#   tools/sync-skills.sh --apply request-audit  # puxa uma skill específica
-#   tools/sync-skills.sh --apply all            # puxa todas as desatualizadas/faltando
+#   tools/sync-skills.sh                        # relatório (dry-run)
+#   tools/sync-skills.sh --apply request-audit   # puxa uma skill específica
+#   tools/sync-skills.sh --apply all             # puxa todas as desatualizadas/faltando
 #   tools/sync-skills.sh --source /caminho/outro-repo   # sobrepõe a detecção automática
 # ==============================================================================
 set -euo pipefail
@@ -47,10 +48,27 @@ resolve_source() {
   echo "$(dirname "$REPO_ROOT")/agentic-research-template"
 }
 
+# Hash combinado de uma pasta inteira: concatena "caminho-relativo:hash" de cada
+# arquivo, ordenado, e hasheia o resultado. Pega adição/remoção/modificação de
+# qualquer arquivo dentro da pasta da skill, não só o SKILL.md. Retorna vazio se
+# a pasta não existir ou estiver vazia.
+folder_hash() {
+  local dir="$1"
+  [[ -d "$dir" ]] || return 0
+  local entries
+  entries="$(find "$dir" -type f | sort | while read -r f; do
+    rel="${f#$dir/}"
+    h="$(sha256sum "$f" | cut -d' ' -f1)"
+    printf "%s:%s|" "$rel" "$h"
+  done)"
+  [[ -n "$entries" ]] || return 0
+  printf "%s" "$entries" | sha256sum | cut -d' ' -f1
+}
+
 SOURCE_ROOT="$(resolve_source)"
 
 if [[ "$(cd "$SOURCE_ROOT" 2>/dev/null && pwd)" == "$REPO_ROOT" ]]; then
-  echo "ℹ️  Este repositório JÁ É o repositório mãe (agentic-research-template) — nada para sincronizar aqui."
+  echo "Este repositorio JA E o repositorio mae (agentic-research-template) - nada para sincronizar aqui."
   echo "   Se você melhorou uma skill localmente, edite-a direto em .claude/skills/ e commit normalmente."
   exit 0
 fi
@@ -65,7 +83,7 @@ fi
 LOCAL_SKILLS_DIR="$REPO_ROOT/.claude/skills"
 mkdir -p "$LOCAL_SKILLS_DIR"
 
-# 2. Comparar cada skill da mãe com a versão local (hash do SKILL.md)
+# 2. Comparar cada skill da mãe com a versão local (hash da pasta inteira)
 echo "🔄 Comparando skills locais com a mãe em: $SOURCE_ROOT"
 echo ""
 
@@ -74,23 +92,20 @@ TO_APPLY=()
 for skill_dir in "$SOURCE_SKILLS_DIR"/*/; do
   [[ -d "$skill_dir" ]] || continue
   name="$(basename "$skill_dir")"
-  mother_file="$skill_dir/SKILL.md"
-  [[ -f "$mother_file" ]] || continue
+  mother_hash="$(folder_hash "${skill_dir%/}")"
+  [[ -n "$mother_hash" ]] || continue
 
-  local_file="$LOCAL_SKILLS_DIR/$name/SKILL.md"
-  mother_hash="$(sha256sum "$mother_file" | cut -d' ' -f1)"
+  local_dir="$LOCAL_SKILLS_DIR/$name"
+  local_hash="$(folder_hash "$local_dir")"
 
-  if [[ ! -f "$local_file" ]]; then
+  if [[ -z "$local_hash" ]]; then
     printf "  %-28s NOVA (não instalada)\n" "$name"
     TO_APPLY+=("$name:nova")
+  elif [[ "$local_hash" == "$mother_hash" ]]; then
+    printf "  %-28s em dia\n" "$name"
   else
-    local_hash="$(sha256sum "$local_file" | cut -d' ' -f1)"
-    if [[ "$local_hash" == "$mother_hash" ]]; then
-      printf "  %-28s em dia\n" "$name"
-    else
-      printf "  %-28s desatualizada\n" "$name"
-      TO_APPLY+=("$name:desatualizada")
-    fi
+    printf "  %-28s desatualizada\n" "$name"
+    TO_APPLY+=("$name:desatualizada")
   fi
 done
 
@@ -109,11 +124,13 @@ applied_any=false
 for entry in "${TO_APPLY[@]}"; do
   name="${entry%%:*}"
   if [[ "$APPLY" != "all" && "$APPLY" != "$name" ]]; then continue; fi
-  src="$SOURCE_SKILLS_DIR/$name/SKILL.md"
+  src_dir="$SOURCE_SKILLS_DIR/$name"
   dest_dir="$LOCAL_SKILLS_DIR/$name"
-  mkdir -p "$dest_dir"
-  cp "$src" "$dest_dir/SKILL.md"
-  echo "  ✅ '$name' copiada da mãe."
+  # Espelha a pasta inteira: remove o destino antes de copiar, para que arquivos
+  # removidos na mãe (ex.: um script descontinuado) também somem localmente.
+  rm -rf "$dest_dir"
+  cp -r "$src_dir" "$dest_dir"
+  echo "  ✅ '$name' copiada da mãe (pasta inteira)."
   applied_any=true
 done
 
