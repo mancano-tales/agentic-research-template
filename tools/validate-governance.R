@@ -20,6 +20,18 @@ PATH_PLAN_DIR <- file.path(CWD, "9-vers", "plan")
 PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
 PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
 
+# Backups do self-heal de hard link (seção 0) vão para uma subpasta dedicada,
+# não a raiz do repo — antes de 2026-07-15 eram escritos direto em
+# "AGENTS.md.bak.<timestamp>"/"CLAUDE.md.bak.<timestamp>" na raiz, que
+# acumulava (achado em um repositório consumidor: 5 arquivos reais na raiz)
+# e poluía visualmente o diretório principal do repositório. Gitignorado por
+# *.bak.* já existente.
+PATH_BACKUP_DIR <- file.path(CWD, "9-vers", "backups")
+make_backup_path <- function(basename) {
+  dir.create(PATH_BACKUP_DIR, recursive = TRUE, showWarnings = FALSE)
+  file.path("9-vers", "backups", basename)
+}
+
 # ── Helpers de Impressão ──────────────────────────────────────────────────────
 cat_info <- function(...) cat("ℹ ", paste0(...), "\n")
 cat_success <- function(...) cat("✅ ", paste0(...), "\n")
@@ -52,7 +64,7 @@ if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
     } else {
       if (mtime_claude > mtime_agents) {
         cat_info("Sincronizando: CLAUDE.md (mais recente) -> AGENTS.md. Recriando Hard Link...")
-        bak_name <- sprintf("AGENTS.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S"))
+        bak_name <- make_backup_path(sprintf("AGENTS.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S")))
         file.copy("AGENTS.md", bak_name, overwrite = TRUE)
         cat_warn(paste("Backup criado em:", bak_name))
 
@@ -89,7 +101,7 @@ if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
         }
       } else {
         cat_info("Sincronizando: AGENTS.md (mais recente) -> CLAUDE.md. Recriando Hard Link...")
-        bak_name <- sprintf("CLAUDE.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S"))
+        bak_name <- make_backup_path(sprintf("CLAUDE.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S")))
         file.copy("CLAUDE.md", bak_name, overwrite = TRUE)
         cat_warn(paste("Backup criado em:", bak_name))
 

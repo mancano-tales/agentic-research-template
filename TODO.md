@@ -19,6 +19,10 @@
 
 ## Concluído
 
+- [x] Mover os backups do self-heal de hard link (`AGENTS.md.bak.*`/`CLAUDE.md.bak.*`) da raiz do repositório para `9-vers/backups/`, e apontar `tools/validate-governance.R` para escrever ali dali em diante — achado promovido de um repositório consumidor (`Nahoum-Mancano-2026-Antitrust`)
+  - Criado: 2026-07-15 12:05 por Claude Sonnet 5 (a pedido de Tales Mançano)
+  - Concluído: 2026-07-15 12:05 por Claude Sonnet 5 (a pedido de Tales Mançano)
+
 - [x] Corrigir formato do TODO.md (ordem invertida, sem metadados) para o padrão Pendente/Concluído com data+hora, agente/humano e link de plano
   - Criado: 2026-07-13 23:50 por Antigravity (a pedido de Tales Mançano)
   - Concluído: 2026-07-14 09:10 por Claude Sonnet 5 (a pedido de Tales Mançano)

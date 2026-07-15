@@ -3,6 +3,16 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-15 12:05 — Backups do self-heal de hard link movidos da raiz para 9-vers/backups/
+
+Achado promovido de um repositório consumidor deste template (`Nahoum-Mancano-2026-Antitrust`): a seção 0 de `tools/validate-governance.R` (self-heal do hard link `CLAUDE.md`/`AGENTS.md` quando os dois divergem) escrevia os backups `AGENTS.md.bak.<timestamp>`/`CLAUDE.md.bak.<timestamp>` direto na raiz do repositório — sem limpeza, acumulavam a cada divergência (5 arquivos reais encontrados na raiz deste próprio template). Como é tooling compartilhado, todo consumidor do template tinha o mesmo problema. Corrigido: os dois pontos de `file.copy()` agora escrevem em `9-vers/backups/` (nova pasta, já coberta pelo `*.bak.*` existente no `.gitignore`, via novo helper `make_backup_path()`); os 5 arquivos encontrados na raiz foram movidos para lá, nenhum deletado.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-15 12:05 (Horário Local)
+- **Agente**: Claude Sonnet 5 / Claude Code / VS Code
+- **Mensagem do Commit**: "fix(governance): relocate hard-link self-heal backups from repo root to 9-vers/backups/"
+- **Arquivos afetados**: `tools/validate-governance.R`, `9-vers/backups/AGENTS.md.bak.*` (movidos), `NEWS.md`, `TODO.md`
+
 ## 2026-07-14 12:45 — Auditoria da adição de skills globais (superpowers) concluída: REQUER REFATORAÇÃO MENOR, corrigido na mesma rodada
 
 Auditoria independente (prompt deixado pelo agente autor em `9-vers/plan/2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md`) do commit `37c28f8`, que tinha adicionado uma tabela de skills globais do plugin `superpowers` como § 4 de `sync-skills/SKILL.md`. Verificado fisicamente antes de aceitar qualquer alegação: commit e diff conferem, as 14 skills listadas existem de verdade no plugin instalado (nomes e contagem 1:1), as 5 fragilidades autodeclaradas pelo autor original são precisas. Veredito: `[REQUER REFATORAÇÃO MENOR]` — achado principal não coberto pela autocrítica: a tabela estava no lugar errado (escopo de `sync-skills` é sincronizar skills *de projeto*, não catalogar plugins *de máquina*) e documentava informação não-portável (`~/.claude/plugins/`, local por usuário/máquina) como se fosse portável — já tinha sido propagada para 2 repositórios consumidores antes da correção. Corrigido: conteúdo movido para nova seção em `CLAUDE.md` ("Skills Globais Disponíveis Neste Ambiente"), com aviso explícito de que é inventário de máquina (não de projeto) e destaque para `using-superpowers`, a única skill do pacote com invocação mandatória por design. Resultado completo da auditoria registrado no próprio prompt.
