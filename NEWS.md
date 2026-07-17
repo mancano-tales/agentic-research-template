@@ -3,6 +3,18 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-17 10:38 — `disable-model-invocation` revertida para `false` em grill-me/grill-with-docs/edit-article
+
+Decisão do autor (2026-07-17): as três skills portadas de Matt Pocock que vinham com `disable-model-invocation: true` (ação só-por-pedido-explícito, preservado fielmente do original desde a instalação em 2026-07-14) passam a `false` — o autor quer as três invocáveis pelo agente como as demais skills do template, em todos os consumidores. Atualizado em conjunto o `agents/openai.yaml` de cada uma (`allow_implicit_invocation: true`) para não divergir entre plataformas (Claude vs. Copilot/OpenAI). `CLAUDE.md` (§ Skills Compartilhadas) atualizado para refletir a mudança. Como de praxe, a edição do `CLAUDE.md` quebrou o hard link físico de `AGENTS.md`/`.github/copilot-instructions.md` — backups dos divergentes salvos em `9-vers/backups/` antes de recriar os links.
+
+Próximo passo (fora deste repositório): consumidores (`MancanoSync` raiz, `Mancano2026-MA-Thesis`, e demais que adotaram o template) precisam rodar `sync-skills --apply` para as três skills para receber a mudança — não é automático.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-17 10:38 (Horário Local)
+- **Agente**: Claude Code / Claude Sonnet 5 / VS Code
+- **Mensagem do Commit**: "feat(governance): disable-model-invocation=false em grill-me/grill-with-docs/edit-article"
+- **Arquivos afetados**: `.claude/skills/grill-me/SKILL.md`, `.claude/skills/grill-me/agents/openai.yaml`, `.claude/skills/grill-with-docs/SKILL.md`, `.claude/skills/grill-with-docs/agents/openai.yaml`, `.claude/skills/edit-article/SKILL.md`, `.claude/skills/edit-article/agents/openai.yaml`, `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `NEWS.md`
+
 ## 2026-07-15 12:05 — Backups do self-heal de hard link movidos da raiz para 9-vers/backups/
 
 Achado promovido de um repositório consumidor deste template (`Nahoum-Mancano-2026-Antitrust`): a seção 0 de `tools/validate-governance.R` (self-heal do hard link `CLAUDE.md`/`AGENTS.md` quando os dois divergem) escrevia os backups `AGENTS.md.bak.<timestamp>`/`CLAUDE.md.bak.<timestamp>` direto na raiz do repositório — sem limpeza, acumulavam a cada divergência (5 arquivos reais encontrados na raiz deste próprio template). Como é tooling compartilhado, todo consumidor do template tinha o mesmo problema. Corrigido: os dois pontos de `file.copy()` agora escrevem em `9-vers/backups/` (nova pasta, já coberta pelo `*.bak.*` existente no `.gitignore`, via novo helper `make_backup_path()`); os 5 arquivos encontrados na raiz foram movidos para lá, nenhum deletado.
