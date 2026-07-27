@@ -16,9 +16,9 @@
 
 # ── Configurações de Caminho ──────────────────────────────────────────────────
 CWD <- getwd()
-PATH_PLAN_DIR <- file.path(CWD, "9-vers", "plan")
+PATH_PLAN_DIR <- file.path(CWD, "0-governance", "plan")
 PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
-PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
+PATH_REVIEWS_INDEX <- file.path(CWD, "0-governance", "llm-reviews", "README.md")
 
 # Backups do self-heal de hard link (seção 0) vão para uma subpasta dedicada,
 # não a raiz do repo — antes de 2026-07-15 eram escritos direto em
@@ -26,10 +26,10 @@ PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
 # acumulava (achado em um repositório consumidor: 5 arquivos reais na raiz)
 # e poluía visualmente o diretório principal do repositório. Gitignorado por
 # *.bak.* já existente.
-PATH_BACKUP_DIR <- file.path(CWD, "9-vers", "backups")
+PATH_BACKUP_DIR <- file.path(CWD, "0-governance", "backups")
 make_backup_path <- function(basename) {
   dir.create(PATH_BACKUP_DIR, recursive = TRUE, showWarnings = FALSE)
-  file.path("9-vers", "backups", basename)
+  file.path("0-governance", "backups", basename)
 }
 
 # ── Helpers de Impressão ──────────────────────────────────────────────────────
@@ -421,7 +421,7 @@ nz <- function(x) {
 
 # ── Convenções compartilhadas entre os modos ──────────────────────────────────
 # Frontmatter YAML passou a ser obrigatório em planos NOVOS em 2026-07-09
-# (decisão do autor; ver 9-vers/plan/README.md § Convenção de cabeçalho).
+# (decisão do autor; ver 0-governance/plan/README.md § Convenção de cabeçalho).
 # Planos anteriores mantêm o cabeçalho em blockquote e são isentos das
 # checagens modernas (nomenclatura, YAML, log de conversa).
 YAML_CONVENTION_DATE <- "2026-07-09"
@@ -657,7 +657,7 @@ get_staged_added_lines <- function(filepath) {
     return(character(0))
   }
   # useBytes = TRUE: arquivos grandes com conteúdo exótico (ex.: os próprios
-  # exports de conversa em 9-vers/llm-reviews/, que embutem JSON com
+  # exports de conversa em 0-governance/llm-reviews/, que embutem JSON com
   # sequências de escape longas) fazem o grepl padrão (baseado em locale)
   # lançar "unable to translate to a wide string" / "input string is
   # invalid" — achado ao vivo commitando este mesmo arquivo. Os padrões
@@ -707,13 +707,13 @@ if (length(staged_files) > 0) {
 # conflito é um problema em qualquer arquivo de texto, inclusive .md.
 #
 # Exceção auto-referencial (mesmo padrão do T1 com "MancanoSync/"): os
-# exports de conversa em 9-vers/llm-reviews/ são transcrição verbatim de
+# exports de conversa em 0-governance/llm-reviews/ são transcrição verbatim de
 # sessões de agente — qualquer teste feito ali DENTRO da própria sessão
 # (ex.: testar esta mesma regex contra ">>>>>>> outra-branch") fica
 # registrado literalmente no log e dispararia T6 sem ser um conflito de
 # verdade. Achado ao vivo commitando o export desta sessão.
 CONFLICT_MARKER_REGEX <- r"{^(<{7}|>{7}|={7}$)}"
-t6_files <- staged_files[!grepl("^9-vers/llm-reviews/", staged_files)]
+t6_files <- staged_files[!grepl("^0-governance/llm-reviews/", staged_files)]
 
 if (length(t6_files) > 0) {
   cat_info(sprintf(
@@ -795,7 +795,7 @@ if (length(rq_files) > 0) {
 # vazavam "file:///c:/Users/Mancano/..." — o escopo do T1 (só .R/.qmd) nunca
 # cobriria isso, porque o vazamento estava na PROSA de governança, não em
 # código/capítulo. Lista curada (não glob) — deliberadamente não inclui
-# `9-vers/llm-reviews/*.md` nem planos já CONCLUÍDO/HISTÓRICO (valor
+# `0-governance/llm-reviews/*.md` nem planos já CONCLUÍDO/HISTÓRICO (valor
 # documental de sessão passada, não devem ser reescritos) nem entradas
 # antigas do NEWS.md (CLAUDE.md § "Guidance Documents": "never rewrite NEWS
 # entries" — mas o escopo "só linhas adicionadas" já protege isso por
@@ -803,8 +803,8 @@ if (length(rq_files) > 0) {
 # É pega; entradas antigas nunca são escaneadas de novo).
 GOVERNANCE_DOCS <- c(
   "CLAUDE.md", "AGENTS.md", "README.md", "GUIDANCE.md",
-  "NEWS.md", "9-vers/GUIDANCE_MAP.md",
-  "9-vers/plan/README.md", "9-vers/llm-reviews/README.md"
+  "NEWS.md", "0-governance/GUIDANCE_MAP.md",
+  "0-governance/plan/README.md", "0-governance/llm-reviews/README.md"
 )
 gov_files <- staged_files[staged_files %in% GOVERNANCE_DOCS]
 
@@ -1198,3 +1198,4 @@ if (errors_found) {
   cat_success("Auditoria de governança concluída com sucesso! Todos os arquivos estão consistentes.")
   quit(status = 0)
 }
+

@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # export_conversa.R — Exporta o JSONL de uma sessão (Claude Code ou Antigravity) para Markdown
 #
 # Uso:
@@ -7,7 +7,7 @@
 # O primeiro argumento pode ser um caminho completo para o .jsonl ou um UUID
 # (ou prefixo de UUID) de sessão, resolvido contra as pastas de sessões.
 #
-# Saída: 9-vers/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
+# Saída: 0-governance/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
 # ==============================================================================
 
 suppressPackageStartupMessages(library(jsonlite))
@@ -443,3 +443,4 @@ close(con)
 cat("✅ Conversa exportada:", normalizePath(arquivo_saida, winslash = "/"), "\n")
 cat("   Período coberto:", fmt_local(ts_ini), "→", fmt_local(ts_fim), "\n")
 cat("   ", n_user, "msgs usuário |", n_asst, "respostas |", n_tools, "chamadas de ferramenta\n")
+
