@@ -1,6 +1,7 @@
-# CLAUDE.md — [NOME DO SEU PROJETO]
+﻿# CLAUDE.md — [NOME DO SEU PROJETO]
 
 > 🚨 **CRITICAL AGENT RULES (COVENANT) — READ FIRST:**
+> - **HARD LINK RULE:** AI Agents **MUST NOT waste time** testing, auditing, or manually recreating hard links (mklink). Automated governance scripts (alidate-governance.R / setup) handle this automatically in the background. Focus strictly on your primary task.
 > - **RULE 1:** You are operating under the **Agent Covenant** framework. Every commit is audited. Run `Rscript tools/validate-governance.R` to test your edits before committing.
 > - **RULE 2:** Any modification in the main source directories REQUIRES an update in the root `NEWS.md` file.
 > - **RULE 3:** When completing a task or plan, you MUST run the conversation exporter to save your session log.
@@ -21,7 +22,6 @@
   - **[PLACEHOLDER - PROTEÇÃO DE AUTORIA]**: Se este projeto tem um diretório de autoria humana primária (prosa, notebooks de pesquisa, etc.) onde edições não devem ser comitadas silenciosamente por agentes, declare-o aqui nomeadamente. Exemplo: "Nunca faça commit na pasta `textos/` sem aprovação humana."
   - **[PLACEHOLDER - PROTEÇÃO DE EXTERNOS]**: Se este projeto tem um arquivo gerenciado por uma ferramenta externa (biblioteca de citação, schema gerado, lockfile), proíba EDIÇÃO manual por agentes aqui — mas note explicitamente que comitar esse arquivo sem editá-lo é seguro (a distinção entre 'não editar' e 'não comitar' gera confusão). Exemplo: "Nunca edite manualmente o arquivo `zotero.bib`."
   - [Adicione outras proibições do seu projeto aqui...]
-  - **Regra sobre Hard Links**: Agentes de IA **NÃO devem perder tempo** testando, auditando ou recriando hard links manualmente (`mklink`). O script de auto-cura automatizado (`validate-governance.R` / `setup`) cuida disso sozinho. Foque estritamente no objetivo principal da tarefa.
 - **Planos ativos**: consulte o índice de status em `9-vers/plan/README.md`.
 
 ---
@@ -137,3 +137,4 @@ Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório 
 *   **Testes Automatizados**: `[Comando de testes]`
 *   **Execução Local**: `[Comando de run dev]`
 *   **Instalação de Dependências**: `[Comando de install]`
+
