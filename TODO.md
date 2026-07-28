@@ -12,17 +12,17 @@
 
 ## Prospectivo
 
-- [ ] Promover a chave de configuração `diretorio_governanca` — tornar as 4 skills de governança e as ferramentas R config-driven, eliminando o hardcode de `9-vers/` (que hoje viola a própria doutrina do `CLAUDE.md` e força remendo textual no consumidor `MancanoSync`, que usa `0-meta/`)
-  - Criado: 2026-07-28 01:54 por Claude Opus 4.8 (a pedido de Tales Mançano)
-  - Motivo de não estar em Pendente: decisão de design pendente do autor (referência pura vs. exemplo entre parênteses; fonte de verdade do `GOV_DIR` nas ferramentas) + a padronização física `9-vers/→0-governance/` já foi tentada e revertida, então mudanças aqui exigem aprovação explícita
-  - Plano: `9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md`
-
 - [ ] Tarefa identificada mas ainda não pronta para execução imediata...
   - Criado: YYYY-MM-DD HH:MM por [Nome do Agente] (a pedido de [Nome do Autor Humano])
   - Motivo de não estar em Pendente: [depende de X / decisão pendente / baixa prioridade]
   - Plano: `9-vers/plan/...` (se houver)
 
 ## Concluído
+
+- [x] Promover a chave de configuração `diretorio_governanca` — tornar as 4 skills de governança e as ferramentas R config-driven, eliminando o hardcode de `9-vers/`
+  - Criado: 2026-07-28 01:54 por Claude Opus 4.8 (a pedido de Tales Mançano)
+  - Concluído: 2026-07-28 por Claude Sonnet 4.6 (Claude Code, web) (a pedido de Tales Mançano)
+  - Plano: `9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md`
 
 - [x] Higiene pós-reversão/renomeação: corrigir caminhos absolutos obsoletos que apontavam para o nome antigo do repositório (`mancano-project-template`) em `GUIDANCE.md` e `.cursor/rules/governance.mdc`, e remover o diretório órfão `0-governance/` (só continha backups gitignorados) deixado pela padronização revertida
   - Criado: 2026-07-28 01:54 por Claude Opus 4.8 (a pedido de Tales Mançano)
