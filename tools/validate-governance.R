@@ -16,9 +16,26 @@
 
 # ── Configurações de Caminho ──────────────────────────────────────────────────
 CWD <- getwd()
-PATH_PLAN_DIR <- file.path(CWD, "9-vers", "plan")
+
+# ── Diretório de governança (indireção) ───────────────────────────────────────
+# O nome do diretório de governança varia entre os repositórios que usam este
+# template: "0-meta" na raiz MancanoSync e no repo `skills`; "9-vers" nos repos
+# de pesquisa, onde é o slot 9 de uma taxonomia numerada VIVA (2-set/, 3-texts/,
+# 4-DA-Code/, 6-images-tables/, 9-vers/) e portanto está correto ali.
+#
+# Nenhum dos dois nomes está errado — errado era fixar o nome aqui. Fixar o nome
+# já produziu três pastas de governança coexistindo na raiz MancanoSync
+# ("0-meta" em uso, "9-vers" e "0-governance" órfãs, ambas fora do git).
+#
+# Ordem de preferência: o primeiro candidato que existir no disco vence.
+# Ver 9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md
+GOV_DIR_CANDIDATOS <- c("0-meta", "9-vers")
+GOV_DIR <- Find(function(d) dir.exists(file.path(CWD, d)), GOV_DIR_CANDIDATOS)
+if (is.null(GOV_DIR)) GOV_DIR <- GOV_DIR_CANDIDATOS[[1]]
+
+PATH_PLAN_DIR <- file.path(CWD, GOV_DIR, "plan")
 PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
-PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
+PATH_REVIEWS_INDEX <- file.path(CWD, GOV_DIR, "llm-reviews", "README.md")
 
 # Backups do self-heal de hard link (seção 0) vão para uma subpasta dedicada,
 # não a raiz do repo — antes de 2026-07-15 eram escritos direto em
@@ -26,10 +43,10 @@ PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
 # acumulava (achado em um repositório consumidor: 5 arquivos reais na raiz)
 # e poluía visualmente o diretório principal do repositório. Gitignorado por
 # *.bak.* já existente.
-PATH_BACKUP_DIR <- file.path(CWD, "9-vers", "backups")
+PATH_BACKUP_DIR <- file.path(CWD, GOV_DIR, "backups")
 make_backup_path <- function(basename) {
   dir.create(PATH_BACKUP_DIR, recursive = TRUE, showWarnings = FALSE)
-  file.path("9-vers", "backups", basename)
+  file.path(GOV_DIR, "backups", basename)
 }
 
 # ── Helpers de Impressão ──────────────────────────────────────────────────────
@@ -713,7 +730,7 @@ if (length(staged_files) > 0) {
 # registrado literalmente no log e dispararia T6 sem ser um conflito de
 # verdade. Achado ao vivo commitando o export desta sessão.
 CONFLICT_MARKER_REGEX <- r"{^(<{7}|>{7}|={7}$)}"
-t6_files <- staged_files[!grepl("^9-vers/llm-reviews/", staged_files)]
+t6_files <- staged_files[!grepl(paste0("^", GOV_DIR, "/llm-reviews/"), staged_files)]
 
 if (length(t6_files) > 0) {
   cat_info(sprintf(
@@ -802,9 +819,10 @@ if (length(rq_files) > 0) {
 # construção: uma entrada nova em NEWS.md que introduza um caminho absoluto
 # É pega; entradas antigas nunca são escaneadas de novo).
 GOVERNANCE_DOCS <- c(
-  "CLAUDE.md", "AGENTS.md", "README.md", "GUIDANCE.md",
-  "NEWS.md", "9-vers/GUIDANCE_MAP.md",
-  "9-vers/plan/README.md", "9-vers/llm-reviews/README.md"
+  "CLAUDE.md", "AGENTS.md", "README.md", "GUIDANCE.md", "NEWS.md",
+  paste0(GOV_DIR, "/GUIDANCE_MAP.md"),
+  paste0(GOV_DIR, "/plan/README.md"),
+  paste0(GOV_DIR, "/llm-reviews/README.md")
 )
 gov_files <- staged_files[staged_files %in% GOVERNANCE_DOCS]
 

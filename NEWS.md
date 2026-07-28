@@ -3,6 +3,26 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-27 21:49 — Indireção real do diretório de governança (WP3) e plano de migração para AGENTS.md
+
+Auditoria pedida pelo autor a partir de um prompt de terceiro que perguntava "qual o melhor nome para a pasta `9-vers/`". A resposta é que a pergunta era a errada: **o nome não era o defeito, a ausência de indireção era.** O nome estava fixado em 242 pontos, incluindo os dois scripts R e as skills que o próprio `CLAUDE.md` declara "nunca hardcoded aqui".
+
+Evidência coletada: três pastas de governança coexistindo na raiz `MancanoSync` (`0-meta` em uso, `9-vers` e `0-governance` órfãs e fora do git); um export de conversa de 2026-07-26 gravado fora do controle de versão porque o `export_conversa.R` fixava `9-vers` num repositório que usa `0-meta`; hard links quebrados em 3 de 8 repositórios (verificado por inode, não por tamanho); e a chave `diretorio_governanca`, documentada em dois consumidores, não consumida por lugar nenhum.
+
+**Conclusão sobre o nome**: `9-vers` e `0-meta` estão os dois corretos, cada um no seu contexto. Nos repositórios de pesquisa, `9-vers` é o slot 9 de uma taxonomia numerada viva (`2-set/`, `3-texts/`, `4-DA-Code/`, `6-images-tables/`) — renomear ali destruiria significado. Com a indireção, a diferença deixa de ser dívida e passa a ser adequação local.
+
+Implementado nesta rodada (WP3): `tools/validate-governance.R` e `tools/export_conversa.R` passam a detectar o diretório em tempo de execução via `GOV_DIR_CANDIDATOS`/`GOV_DIR`, cobrindo também `PATH_BACKUP_DIR`, o filtro T6 e a lista `GOVERNANCE_DOCS`. Testado nos dois sentidos (`GOV_DIR = 9-vers` neste repositório, `0-meta` num repositório simulado).
+
+Achado durante a auditoria: o repositório `cha-affirmative-action-us-brazil` **já tinha** essa mesma indireção no validador, escrita numa rodada anterior e nunca promovida ao template-mãe — a implementação de hoje convergiu de forma independente para a mesma solução. Correções nascendo nos consumidores e não voltando para a mãe é um problema estrutural, registrado no plano.
+
+Plano de migração completo (11 work packages, 12 repositórios) em `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`, incluindo: adoção do padrão AGENTS.md por symlink no lugar dos hard links, remoção de `.github/copilot-instructions.md` e `.cursor/rules/` (redundantes desde que Copilot e Cursor passaram a ler `AGENTS.md`), migração de proibições em prosa para travas em `PreToolUse` hook, e dois ritmos de trabalho para eliminar fadiga de conformidade. O plano incorpora benchmarking do `microsoft/agent-governance-toolkit` (4.9k★, MIT), clonado e lido, cuja tese — *"prompt-level safety is not a control surface"* — valida com citação de OWASP e literatura o desenho do WP10.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-27 21:49 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "feat(governance): indireção real do diretório de governança (WP3) e plano de migração AGENTS.md"
+- **Arquivos afetados**: `tools/validate-governance.R`, `tools/export_conversa.R`, `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`, `9-vers/plan/README.md`, `NEWS.md`, `TODO.md`
+
 ## 2026-07-17 10:38 — `disable-model-invocation` revertida para `false` em grill-me/grill-with-docs/edit-article
 
 Decisão do autor (2026-07-17): as três skills portadas de Matt Pocock que vinham com `disable-model-invocation: true` (ação só-por-pedido-explícito, preservado fielmente do original desde a instalação em 2026-07-14) passam a `false` — o autor quer as três invocáveis pelo agente como as demais skills do template, em todos os consumidores. Atualizado em conjunto o `agents/openai.yaml` de cada uma (`allow_implicit_invocation: true`) para não divergir entre plataformas (Claude vs. Copilot/OpenAI). `CLAUDE.md` (§ Skills Compartilhadas) atualizado para refletir a mudança. Como de praxe, a edição do `CLAUDE.md` quebrou o hard link físico de `AGENTS.md`/`.github/copilot-instructions.md` — backups dos divergentes salvos em `9-vers/backups/` antes de recriar os links.

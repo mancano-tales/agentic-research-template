@@ -7,7 +7,8 @@
 # O primeiro argumento pode ser um caminho completo para o .jsonl ou um UUID
 # (ou prefixo de UUID) de sessão, resolvido contra as pastas de sessões.
 #
-# Saída: 9-vers/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
+# Saída: <dir-governanca>/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
+#        onde <dir-governanca> é detectado em tempo de execução (ver abaixo).
 # ==============================================================================
 
 suppressPackageStartupMessages(library(jsonlite))
@@ -30,7 +31,25 @@ PASTA_ANTIGRAVITY <- file.path(
   Sys.getenv("USERPROFILE", unset = path.expand("~")),
   ".gemini", "antigravity", "brain"
 )
-PASTA_SAIDA <- file.path(getwd(), "9-vers", "llm-reviews")
+# ── Diretório de governança (indireção) ───────────────────────────────────────
+# O nome do diretório de governança varia entre os repositórios que usam este
+# template: "0-meta" na raiz MancanoSync e no repo `skills`; "9-vers" nos repos
+# de pesquisa, onde é o slot 9 de uma taxonomia numerada VIVA (2-set/, 3-texts/,
+# 4-DA-Code/, 6-images-tables/, 9-vers/) e portanto está correto ali.
+#
+# Nenhum dos dois nomes está errado — errado era fixar o nome aqui. Em
+# 2026-07-26 este script escreveu um export em "9-vers/llm-reviews/" dentro de
+# um repositório que usa "0-meta/", numa pasta ignorada pelo .gitignore: o
+# arquivo ficou fora do controle de versão e sem backup. Esta detecção existe
+# para que isso não se repita.
+#
+# Ordem de preferência: o primeiro candidato que existir no disco vence.
+# Ver 9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md
+GOV_DIR_CANDIDATOS <- c("0-meta", "9-vers")
+GOV_DIR <- Find(function(d) dir.exists(file.path(getwd(), d)), GOV_DIR_CANDIDATOS)
+if (is.null(GOV_DIR)) GOV_DIR <- GOV_DIR_CANDIDATOS[[1]]
+
+PASTA_SAIDA <- file.path(getwd(), GOV_DIR, "llm-reviews")
 FUSO <- "America/Sao_Paulo"
 
 # ── Argumentos ────────────────────────────────────────────────────────────────
