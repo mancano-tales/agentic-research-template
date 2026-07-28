@@ -3,6 +3,30 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-28 00:40 — Template deixa de ser mãe das skills; `sync-skills` corrigido em dois defeitos
+
+**Decisão de arquitetura (autor).** O ecossistema tinha **duas mães declaradas** para as mesmas skills: este template se declarava mãe das skills de governança, e o repositório irmão `skills` reunia as mesmas 11 mais ~90 outras. A divisão passa a ser: `skills` é dono das skills (os procedimentos, o *como*); este template é dono de hooks, policy-as-code, validador e estrutura (o que torna a regra obrigatória). Este template vira **consumidor**.
+
+A interface entre os dois é a seção § Configuração de Skills: a skill permanece genérica e lê dali o específico do projeto. A chave **`diretorio_governanca` foi adicionada** — ela existia em dois consumidores (`MancanoSync`, `skills`) e não constava deste template, apesar de ser exatamente o contrato que permite duas mães sem acoplamento.
+
+**Por que a decisão importa — dois casos medidos hoje**, um em cada direção:
+
+- Uma correção nascida em `cha-affirmative-action-us-brazil` (commit `6f8e7e7`, 2026-07-21, escrita pelo próprio autor) nunca voltou para a mãe. Seis dias depois foi reimplementada do zero aqui, sem que ninguém soubesse que já existia.
+- A decisão registrada neste `NEWS.md` em 2026-07-17 10:38 (`disable-model-invocation: false` em `grill-me`/`grill-with-docs`/`edit-article`, "em todos os consumidores") nunca saiu deste repositório. Onze dias depois o valor antigo persistia no repo `skills` **e nas duas cópias globais da máquina** (`~/.claude/skills/`, `~/.gemini/config/skills/`), que são as que os agentes de fato carregam. Na prática a decisão não estava em vigor em lugar nenhum. Corrigido nas três camadas.
+
+**`sync-skills` corrigido em dois defeitos**, ambos com evidência:
+
+1. **Comparava bytes, não conteúdo.** `Get-FileHash`/`sha256sum` cru marcava como "desatualizada" qualquer skill que só tivesse mudado de codificação. Numa auditoria das 11 skills sobrepostas, 9 apareciam divergentes e **8 tinham conteúdo idêntico** — a diferença era BOM, CRLF e linha em branco no fim, introduzidos horas antes pela padronização de frontmatter no repo `skills`. A ferramenta reportava informação verdadeira e inútil. Agora normaliza antes de hashear (`Get-ContentHash`/`content_hash`), tratando arquivos binários byte a byte.
+2. **O relatório era dominado por ruído.** Com a mãe passando a ter 101 skills, a primeira execução real listou **90 linhas "NOVA (não instalada)" contra 9 úteis**. O relatório agora cobre só as skills já instaladas e resume as disponíveis numa linha. Consequência deliberada: **`--apply all` significa "atualizar o que eu já tenho"**, nunca "instalar as 101" — instalar skill nova exige nomeá-la.
+
+Os dois scripts (`.ps1` e `.sh`) foram verificados produzindo saída idêntica contra a nova mãe. O `.ps1` recebeu **BOM UTF-8**: o Windows PowerShell 5.1 lê `.ps1` sem BOM como ANSI, e o caractere `ℹ` adicionado nesta rodada quebrava o parser — o arquivo dependia de sorte para os emoji que já continha.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-28 00:40 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "refactor(governance): template vira consumidor de skills; sync-skills compara conteúdo normalizado"
+- **Arquivos afetados**: `tools/sync-skills.ps1`, `tools/sync-skills.sh`, `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `NEWS.md`
+
 ## 2026-07-27 21:49 — Indireção real do diretório de governança (WP3) e plano de migração para AGENTS.md
 
 Auditoria pedida pelo autor a partir de um prompt de terceiro que perguntava "qual o melhor nome para a pasta `9-vers/`". A resposta é que a pergunta era a errada: **o nome não era o defeito, a ausência de indireção era.** O nome estava fixado em 242 pontos, incluindo os dois scripts R e as skills que o próprio `CLAUDE.md` declara "nunca hardcoded aqui".

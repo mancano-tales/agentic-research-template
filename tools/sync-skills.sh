@@ -3,7 +3,7 @@
 # sync-skills.sh — Sincronização de skills de governança a partir do repositório mãe
 #
 # Compara as skills locais (.claude/skills/*) com as do repositório mãe (por padrão,
-# a pasta irmã 'agentic-research-template') e reporta o que está desatualizado ou
+# a pasta irmã 'skills') e reporta o que está desatualizado ou
 # faltando. Compara a PASTA inteira de cada skill (SKILL.md e arquivos auxiliares,
 # ex.: scripts/), não só o SKILL.md. Por padrão roda em modo dry-run (só relatório)
 # — nada é escrito no disco sem --apply. Nunca commita: só deixa a mudança no
@@ -44,8 +44,37 @@ resolve_source() {
       return
     fi
   fi
-  # Padrão: pasta irmã "agentic-research-template"
-  echo "$(dirname "$REPO_ROOT")/agentic-research-template"
+  # Padrão: pasta irmã "skills" — repositório mãe das skills desde 2026-07-28.
+  # Antes desta data o padrão era "agentic-research-template", que se declarava mãe
+  # das skills de governança enquanto o repositório "skills" reunia as mesmas skills
+  # mais ~90 outras. Duas mães para a mesma peça é o que fazia este script comparar
+  # contra uma fonte ambígua e reportar sinal sem significado.
+  echo "$(dirname "$REPO_ROOT")/skills"
+}
+
+# Hash do CONTEÚDO de um arquivo, não dos seus bytes crus.
+#
+# Por que isto existe: até 2026-07-28 este script usava sha256sum direto nos bytes.
+# Consequência real, medida numa auditoria: das 11 skills compartilhadas entre o
+# template e o repositório mãe, 9 apareciam "desatualizadas" — e 8 delas tinham
+# conteúdo IDÊNTICO. A diferença era BOM (marca de codificação), CRLF vs LF e uma
+# linha em branco no fim. O script reportava informação verdadeira e inútil.
+#
+# Codificação não é conteúdo. Para arquivos de texto, normaliza antes de hashear:
+# remove BOM UTF-8, converte CRLF/CR para LF, remove linhas em branco no fim.
+# Extensões não reconhecidas como texto são hasheadas byte a byte.
+content_hash() {
+  local f="$1"
+  case "${f,,}" in
+    *.md|*.yaml|*.yml|*.json|*.toml|*.txt|*.r|*.sh|*.ps1|*.py|*.js|*.mjs|*.csv)
+      sed -e '1s/^\xef\xbb\xbf//' -e 's/\r$//' "$f" \
+        | awk 'BEGIN{n=0} {if($0==""){n++} else {while(n-->0) print ""; n=0; print}}' \
+        | sha256sum | cut -d' ' -f1
+      ;;
+    *)
+      sha256sum "$f" | cut -d' ' -f1
+      ;;
+  esac
 }
 
 # Hash combinado de uma pasta inteira: concatena "caminho-relativo:hash" de cada
@@ -58,7 +87,7 @@ folder_hash() {
   local entries
   entries="$(find "$dir" -type f | sort | while read -r f; do
     rel="${f#$dir/}"
-    h="$(sha256sum "$f" | cut -d' ' -f1)"
+    h="$(content_hash "$f")"
     printf "%s:%s|" "$rel" "$h"
   done)"
   [[ -n "$entries" ]] || return 0
@@ -68,7 +97,7 @@ folder_hash() {
 SOURCE_ROOT="$(resolve_source)"
 
 if [[ "$(cd "$SOURCE_ROOT" 2>/dev/null && pwd)" == "$REPO_ROOT" ]]; then
-  echo "Este repositorio JA E o repositorio mae (agentic-research-template) - nada para sincronizar aqui."
+  echo "Este repositorio JA E o repositorio mae das skills - nada para sincronizar aqui."
   echo "   Se você melhorou uma skill localmente, edite-a direto em .claude/skills/ e commit normalmente."
   exit 0
 fi
@@ -87,7 +116,17 @@ mkdir -p "$LOCAL_SKILLS_DIR"
 echo "🔄 Comparando skills locais com a mãe em: $SOURCE_ROOT"
 echo ""
 
+# O relatório cobre apenas as skills que este repositório JÁ TEM instaladas. As
+# demais existentes na mãe são apenas contadas ao final, não listadas uma a uma.
+#
+# Por quê: a mãe (repositório `skills`) reúne 101 skills — governança, escrita
+# acadêmica, análise em R, portadas de terceiros. Um consumidor usa um subconjunto.
+# Antes de 2026-07-28 o relatório listava cada skill não instalada como "NOVA", o
+# que enterrava as poucas linhas úteis (as desatualizadas) sob dezenas de linhas de
+# ruído — 90 contra 9 na primeira execução real. Instalar skill nova é decisão
+# deliberada do consumidor, não pendência a ser cobrada em todo relatório.
 TO_APPLY=()
+AVAILABLE=()
 
 for skill_dir in "$SOURCE_SKILLS_DIR"/*/; do
   [[ -d "$skill_dir" ]] || continue
@@ -99,8 +138,7 @@ for skill_dir in "$SOURCE_SKILLS_DIR"/*/; do
   local_hash="$(folder_hash "$local_dir")"
 
   if [[ -z "$local_hash" ]]; then
-    printf "  %-28s NOVA (não instalada)\n" "$name"
-    TO_APPLY+=("$name:nova")
+    AVAILABLE+=("$name")
   elif [[ "$local_hash" == "$mother_hash" ]]; then
     printf "  %-28s em dia\n" "$name"
   else
@@ -109,19 +147,35 @@ for skill_dir in "$SOURCE_SKILLS_DIR"/*/; do
   fi
 done
 
+if [[ ${#AVAILABLE[@]} -gt 0 ]]; then
+  echo ""
+  echo "ℹ ${#AVAILABLE[@]} skill(s) disponíveis na mãe e não instaladas aqui."
+  echo "   Para ver a lista:      ls \"$SOURCE_SKILLS_DIR\""
+  echo "   Para instalar uma:     tools/sync-skills.sh --apply <nome>"
+fi
+
 echo ""
 
 # 3. Aplicar, se pedido
 if [[ -z "$APPLY" ]]; then
   if [[ ${#TO_APPLY[@]} -gt 0 ]]; then
-    echo "Rode com --apply <nome-da-skill> ou --apply all para puxar as atualizações acima."
+    echo "Rode com --apply all para atualizar as desatualizadas acima, ou --apply <nome> para uma skill específica (inclusive nova)."
     echo "Nada foi escrito no disco (modo relatório)."
   fi
   exit 0
 fi
 
+# 'all' significa "atualizar tudo que eu JÁ TENHO", nunca "instalar as 101 da mãe".
+# Instalar uma skill nova exige nomeá-la explicitamente.
+CANDIDATES=("${TO_APPLY[@]}")
+if [[ "$APPLY" != "all" ]]; then
+  for a in "${AVAILABLE[@]}"; do
+    [[ "$a" == "$APPLY" ]] && CANDIDATES+=("$a:nova")
+  done
+fi
+
 applied_any=false
-for entry in "${TO_APPLY[@]}"; do
+for entry in "${CANDIDATES[@]}"; do
   name="${entry%%:*}"
   if [[ "$APPLY" != "all" && "$APPLY" != "$name" ]]; then continue; fi
   src_dir="$SOURCE_SKILLS_DIR/$name"

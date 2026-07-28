@@ -74,12 +74,28 @@
 
 ## Skills Compartilhadas Entre Projetos
 
-Este template é o **repositório mãe** de um conjunto de skills usadas por vários projetos correlatos:
+> **Mudança de arquitetura (autor, 2026-07-28).** Este template **NÃO é mais a mãe das skills**. Até esta data ele se declarava mãe das skills de governança enquanto o repositório irmão `skills` reunia as mesmas 11 mais ~90 outras — duas mães para a mesma peça. Era isso que fazia o `sync-skills` comparar contra uma fonte ambígua e reportar "em dia"/"desatualizada" sem significado, e o que fez a decisão de 2026-07-17 sobre `disable-model-invocation` levar onze dias para chegar a lugar nenhum.
+>
+> A divisão passa a ser:
+>
+> | Repositório | É dono de |
+> |---|---|
+> | **`skills`** | as skills — os procedimentos, o *como* |
+> | **este template** | hooks, policy-as-code, validador, estrutura — o que torna a regra obrigatória |
+>
+> Este template é **consumidor** das skills. A interface entre os dois é a seção **"Configuração de Skills"** abaixo: a skill permanece genérica e lê dali o que for específico do projeto. Edite skills no repositório `skills`, não aqui — mudanças locais serão sobrescritas no próximo `sync-skills --apply`.
+
+Sobre o conjunto de skills que este template consome:
 
 - **Skills de governança, autoria própria** (`close-task`, `request-audit`, `export-conversation`, `git-cleanup`, `sync-skills`, `pdf-text-extractor`): **byte-idênticas** em todo repositório que as usa — nunca hardcodeiam caminho, nome de arquivo ou convenção específica de um projeto. Qualquer particularidade de repositório vem da seção **"Configuração de Skills"** abaixo, nunca do texto da própria skill — isso é o que permite comparar skills por hash entre repositórios e ter um sinal de "em dia"/"desatualizada" que significa alguma coisa de verdade (ver histórico da decisão em `9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md`).
 - **Skills portadas de terceiros** (`grill-me`, `grilling`, `grill-with-docs`, `edit-article`, `code-review`): de [mattpocock/skills](https://github.com/mattpocock/skills) (licença MIT), instaladas em 2026-07-14 a pedido do autor após uma triagem ("grill") das ~32 skills do repositório original — a maioria é específica de projetos TypeScript/Node e não se aplica aqui. Instaladas fielmente ao original (mesmo texto, mesmos arquivos `agents/openai.yaml` de interoperabilidade), sem adaptar ao padrão config-driven acima — não são deste projeto, não faz sentido reescrevê-las. **Gaps conhecidos, não corrigidos**: `grill-with-docs` referencia uma skill `/domain-modeling` do repositório original que não foi instalada (a interview roda, mas a geração de ADR/glossário via domain-modeling não vai funcionar até essa skill ser adicionada); `code-review` referencia `docs/agents/issue-tracker.md`/`/setup-matt-pocock-skills`, que não existem aqui — degrada graciosamente (pula o eixo Spec e avisa), não quebra.
 
-Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório por padrão; `-Apply <skill>` para aplicar) ou pela skill `sync-skills`, que envolve o script com a cerimônia de revisão e commit explícito — nunca há sincronização automática/silenciosa nem link físico entre repositórios (junctions/symlinks entre repositórios distintos já se mostraram frágeis sob renomeação de pasta e sincronização de nuvem). O script compara a **pasta inteira** de cada skill (não só o `SKILL.md`) — algumas skills têm arquivos auxiliares junto (`pdf-text-extractor/scripts/`, `agents/openai.yaml` nas portadas de terceiros). Se este projeto **é** o repositório mãe, edite as skills direto em `.claude/skills/`; se é um consumidor, veja `.claude/skills/sync-skills/SKILL.md` para o fluxo completo.
+Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório por padrão; `-Apply <skill>` para aplicar) ou pela skill `sync-skills`, que envolve o script com a cerimônia de revisão e commit explícito — nunca há sincronização automática/silenciosa nem link físico entre repositórios (junctions/symlinks entre repositórios distintos já se mostraram frágeis sob renomeação de pasta e sincronização de nuvem, e **cópia é a escolha portátil**: funciona em qualquer sistema operacional, sem exigir Developer Mode ou privilégio de administrador — o que importa para um template público). O script compara a **pasta inteira** de cada skill (não só o `SKILL.md`) — algumas skills têm arquivos auxiliares junto (`pdf-text-extractor/scripts/`, `agents/openai.yaml` nas portadas de terceiros). Veja `.claude/skills/sync-skills/SKILL.md` para o fluxo completo.
+
+**Duas correções no `sync-skills` em 2026-07-28**, ambas motivadas por defeito medido:
+
+1. **Compara conteúdo normalizado, não bytes crus.** Antes usava hash direto do arquivo, o que marcava como "desatualizada" qualquer skill que só tivesse mudado de codificação. Numa auditoria real, 8 de 9 supostas divergências eram BOM, CRLF e linha em branco no fim — conteúdo idêntico. A ferramenta reportava informação verdadeira e inútil, e custou tempo investigando divergência inexistente.
+2. **O relatório só cobre as skills já instaladas.** A mãe tem 101 skills e um consumidor usa um subconjunto; listar cada não instalada como "NOVA" enterrava as linhas úteis sob ruído (90 contra 9 na primeira execução). As disponíveis viram uma linha de resumo. Por consequência, **`--apply all` agora significa "atualizar o que eu já tenho"**, nunca "instalar as 101" — instalar skill nova exige nomeá-la.
 
 **Invocação — `disable-model-invocation`**: nenhuma das skills de governança usa essa flag hoje (decisão do autor, 2026-07-14 — testada e depois revertida). Das portadas de terceiros, `grill-me`, `grill-with-docs` e `edit-article` vinham com a flag `true` do próprio Matt Pocock (ele as trata como ações só-por-pedido-explícito); **mudado para `false` em 2026-07-17 (decisão do autor)** — ele quer as três model-invoked como as demais, e a interoperabilidade `agents/openai.yaml` de cada uma foi atualizada em conjunto (`allow_implicit_invocation: true`) para não divergir entre plataformas. `grilling` e `code-review` seguem sem a flag (já eram model-invoked).
 
@@ -118,6 +134,7 @@ Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório 
 
 | Chave | Usada por | Valor neste repositório |
 |---|---|---|
+| `diretorio_governanca` | todas as skills de governança | `9-vers/` (o slot 9 da taxonomia numerada de repositórios de pesquisa). Consumidores que usam outro nome — `0-meta/` na raiz `MancanoSync` e no repo `skills` — declaram o seu aqui. Os scripts `tools/validate-governance.R` e `tools/export_conversa.R` **detectam o diretório em tempo de execução** (`GOV_DIR`), então ambos os nomes funcionam; esta chave existe para as skills, que são texto e não executam detecção |
 | `diretorio_autoria_primaria` | `close-task`, `git-cleanup` | [PLACEHOLDER — se este projeto tem uma pasta de prosa/notebooks de autoria humana que agentes não devem comitar sem autorização, declare o caminho aqui] |
 | `arquivo_gerenciado_externamente` | `git-cleanup` | [PLACEHOLDER — se algum arquivo é escrito por uma ferramenta externa (biblioteca de citação, lockfile, schema gerado) e agentes nunca devem editá-lo manualmente, declare o caminho aqui] |
 | `script_exportar_conversa` | `close-task`, `export-conversation` | `tools/export_conversa.R` (padrão do template — ajuste se movido) |
