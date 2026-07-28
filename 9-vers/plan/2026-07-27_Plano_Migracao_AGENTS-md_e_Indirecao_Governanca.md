@@ -13,10 +13,10 @@ tarefas:
   - { desc: "WP0 — Ativar Developer Mode no Windows (ação humana, pré-requisito)", status: pendente, data: null }
   - { desc: "WP1 — Substituir hard links por symlink AGENTS.md → CLAUDE.md e remover o self-heal", status: pendente, data: null }
   - { desc: "WP2 — Remover copilot-instructions.md e .cursor/rules/ dos consumidores", status: pendente, data: null }
-  - { desc: "WP3 — Indireção real do diretório de governança (PATH_GOV_DIR + diretorio_governanca)", status: pendente, data: null }
-  - { desc: "WP4 — Resgatar os órfãos da raiz MancanoSync (9-vers/ e 0-governance/)", status: pendente, data: null }
+  - { desc: "WP3 — Indireção real do diretório de governança (scripts R nos 7 repos; falta as skills lerem a chave)", status: parcial, data: "2026-07-28 07:51" }
+  - { desc: "WP4 — Resgatar os órfãos da raiz MancanoSync (export resgatado; pastas vazias aguardam autorização)", status: concluido, data: "2026-07-28 07:51" }
   - { desc: "WP5 — Reduzir CLAUDE.md para <200 linhas migrando regras para .claude/rules/", status: pendente, data: null }
-  - { desc: "WP6 — Substituir sync-skills por symlink de .claude/rules/ (mecanismo oficial)", status: pendente, data: null }
+  - { desc: "WP6 — SUPERADO: sync-skills corrigido e mantido; cópia + checagem em vez de symlink", status: superado, data: "2026-07-28 07:51" }
   - { desc: "WP7 — Decidir nome do diretório de governança por repositório (último passo)", status: pendente, data: null }
   - { desc: "WP8 — Dois ritmos de trabalho (Fluxo Rápido vs Fluxo Arquitetural) com gatilho mecânico", status: pendente, data: null }
   - { desc: "WP9 — Auditoria silenciosa via Stop hook; avaliar SpecStory como substituto do export_conversa.R", status: pendente, data: null }
@@ -34,6 +34,61 @@ news: []
 > **Elaborado por**: Claude Opus 5 (Claude Code, VS Code)
 > **Por quê**: A auditoria de 2026-07-27 encontrou três pastas de governança coexistindo na raiz `MancanoSync`, um export de conversa fora do controle de versão, hard links quebrados em 3 de 8 repositórios, e uma chave de configuração (`diretorio_governanca`) que não é lida por lugar nenhum. A causa raiz não é o nome da pasta: é a ausência de indireção. Enquanto isso, a documentação oficial do Claude Code passou a oferecer mecanismos que tornam boa parte do tooling artesanal deste template desnecessário.
 > **Como usar**: Executar os Work Packages **na ordem numérica**. A ordem não é estética — WP3 antes de WP7 é o que impede a próxima renomeação de repetir o estrago. Cada WP é commitável isoladamente.
+
+---
+
+## ⚡ COMECE AQUI — estado em 2026-07-28 07:51
+
+**Se você é um agente retomando este trabalho numa sessão nova, leia esta seção inteira antes de tocar em qualquer arquivo.**
+
+### O que já foi feito (7 repositórios, 14 commits)
+
+| Repositório | Commits | O que entrou |
+|---|---|---|
+| `agentic-research-template` | `5fa9b59` `1cb784b` `b524dff` `9fc1abc` | WP3, este plano, vira consumidor de skills, sync-skills corrigido, WP11 |
+| `skills` | `ea6227d` `8a0f246` `11297d3` | vira **mãe das skills**, doc corrigida, auto-identificação |
+| `MancanoSync` (raiz) | `1bd1f33` `2e721dd` | WP3 + **WP4 concluído**, adota a nova mãe |
+| `cha-affirmative-action-us-brazil` | `84ecf66` `e03f2b2` | WP3 (bug latente desarmado), sincronizado |
+| `Nahoum-Mancano-2026-Antitrust` | `a839354` `f11e363` | WP3, sincronizado |
+| `agentic-institutionalism` | `fc3721d` | WP3 |
+| `Mancano2026-MA-Thesis` | `192eb02` | WP3, sincronizado |
+
+**WP3 está CONCLUÍDO** nos 7 repositórios com scripts R. **WP4 está CONCLUÍDO** (export resgatado e versionado). As 11 skills compartilhadas estão **em dia** com a mãe em todos os consumidores.
+
+### Decisão de arquitetura tomada nesta rodada (supera partes deste plano)
+
+O ecossistema tinha **duas mães declaradas** para as mesmas skills. Ficou definido:
+
+| Repositório | É dono de |
+|---|---|
+| **`skills`** | as skills — os procedimentos, o *como* |
+| **`agentic-research-template`** | hooks, policy-as-code, validador, estrutura — o que torna a regra obrigatória |
+
+**Consequência para este plano**: as seções § 0.2 (item 5) e § 0.7 (item 6) foram escritas antes dessa decisão e ainda descrevem a arquitetura antiga. O **WP6** ("substituir sync-skills por symlink de `.claude/rules/`") foi **superado** — o `sync-skills` foi corrigido e voltou a funcionar; `ruler`, `npx skills` e plugin marketplace ficaram **engavetados** deliberadamente, para reconsideração só depois que a arquitetura de duas mães provar-se estável.
+
+**Mecanismo escolhido: cópia + checagem de deriva.** Não symlink. Motivo: o template é público e tem adotante externo (§ 0.5); exigir Developer Mode no Windows torna a adoção hostil, e cópia funciona em qualquer sistema operacional sem privilégio.
+
+### O que fazer a seguir, em ordem
+
+1. **WP10** — travas de código. Deve vir **antes do WP5**: toda proibição que vira trava física sai do texto do `CLAUDE.md` por consequência, evitando cortar duas vezes.
+2. **WP11** — caminhos absolutos. Depende do WP10 (enquanto `core.hooksPath` puder ficar desconfigurado em silêncio, qualquer limpeza volta a sujar).
+3. **WP1/WP2** — só depois do WP0, que é ação humana.
+4. **WP5, WP8, WP9** — em qualquer ordem depois do WP10.
+
+### 🚧 Bloqueado, aguardando o autor humano
+
+- **WP0 — Developer Mode** (Configurações → Sistema → Para desenvolvedores). Trava o WP1 inteiro.
+- **Pastas vazias na raiz**: `MancanoSync/9-vers/` e `MancanoSync/0-governance/` ficaram vazias após o WP4 e **não foram removidas** — o `CLAUDE.md` da raiz exige autorização expressa para deletar pasta da raiz.
+- **SpecStory (WP9)**: o autor instalou a extensão em 2026-07-27 e está testando. Ressalva registrada: não cobre Antigravity, que gera parte dos exports.
+
+### ⚠️ Armadilhas descobertas na prática — não repita
+
+1. **O relógio do sistema desta máquina está ~5h45 atrasado.** Confirme o horário com o autor antes de carimbar qualquer timestamp. Ver § 6b.
+2. **Worktrees quebram a detecção da mãe.** De dentro de `repo.worktrees/branch/`, a pasta irmã resolve errado — use `--source` explícito.
+3. **`.ps1` sem BOM quebra no PowerShell 5.1.** Ele lê como ANSI; qualquer caractere não-ASCII adicionado vira erro de parser. O `sync-skills.ps1` já tem BOM; mantenha.
+4. **Vários repositórios têm `AGENTS.md` e `.github/copilot-instructions.md` sujos no working tree**, de sessões anteriores. **Não commite isso** — não é seu. Stage apenas o que você tocou.
+5. **A dissertação tinha um commit de outro agente pela metade** (Antigravity) quando esta sessão começou. Sempre rode `git diff --cached` antes de commitar lá.
+6. **O relatório do `sync-skills` leva ~30s** por causa da normalização de conteúdo. É esperado, não é travamento.
 
 ---
 
@@ -295,17 +350,17 @@ Distribuição na tese: 171 arquivos em `9-vers/`, 166 em `4-DA-Code/`, 8 em `3-
 - [ ] Atualizar organograma no `README.md`
 
 ### WP3 — Indireção real
-- [ ] Portar `PATH_GOV_DIR` do repo `skills` para o `validate-governance.R` do template
-- [ ] Portar a detecção para `export_conversa.R`
-- [ ] Adicionar `diretorio_governanca` à tabela do `CLAUDE.md` do template
-- [ ] Reescrever as 4 skills para consultar a chave
+- [x] ~~Portar `PATH_GOV_DIR` para o `validate-governance.R`~~ CONCLUÍDO nos 7 repositórios
+- [x] ~~Portar a detecção para `export_conversa.R`~~ CONCLUÍDO
+- [x] ~~Adicionar `diretorio_governanca` à tabela do `CLAUDE.md`~~ CONCLUÍDO (`1cb784b`)
+- [ ] Reescrever as 4 skills para consultar a chave — **PENDENTE**, é a metade não feita do WP3 (as skills ainda escrevem `9-vers/` literalmente)
 - [ ] **Teste de regressão**: rodar o exportador num repo `0-meta` e num `9-vers`, confirmar destino correto nos dois
 
 ### WP4 — Resgate dos órfãos
-- [ ] Mover o export de 2026-07-26 para `0-meta/llm-reviews/`
-- [ ] Registrar no inventário
-- [ ] Conferir se os 2 `.bak` de `0-governance/` têm conteúdo único; se não, deletar
-- [ ] Remover as duas pastas órfãs
+- [x] ~~Mover o export de 2026-07-26~~ CONCLUÍDO (`1bd1f33`)
+- [x] ~~Registrar no inventário~~ CONCLUÍDO
+- [x] ~~Conferir os 2 `.bak` de `0-governance/`~~ CONCLUÍDO — consolidados em `0-meta/backups/`
+- [ ] Remover as duas pastas órfãs — **AGUARDA AUTORIZAÇÃO DO AUTOR** (pastas vazias, deletar pasta da raiz exige autorização expressa)
 
 ### WP5 — Densidade
 - [ ] Rodar `/doctor` para a proposta automática de cortes
