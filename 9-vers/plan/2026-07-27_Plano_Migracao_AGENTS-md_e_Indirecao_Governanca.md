@@ -21,6 +21,7 @@ tarefas:
   - { desc: "WP8 — Dois ritmos de trabalho (Fluxo Rápido vs Fluxo Arquitetural) com gatilho mecânico", status: pendente, data: null }
   - { desc: "WP9 — Auditoria silenciosa via Stop hook; avaliar SpecStory como substituto do export_conversa.R", status: pendente, data: null }
   - { desc: "WP10 — Migrar travas de prompt para PreToolUse hooks; reduzir dependência de R", status: pendente, data: null }
+  - { desc: "WP11 — Eliminar caminhos absolutos locais (10.5k+ ocorrências, 7 repositórios)", status: pendente, data: null }
 relacionados:
   - "9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md"
 news: []
@@ -240,6 +241,37 @@ A doc oficial do Claude Code é explícita: *"Claude treats them as context, not
 *   **[NEW]** `tools/check-integrity.ps1` / `.sh` — validador sem dependência de R. **R é dependência pesada demais para um template público**: adotantes externos (§ 0.5) provavelmente não o têm instalado, e hoje toda a validação depende dele.
 *   **[MODIFY]** `CLAUDE.md` — remover as proibições que passaram a ser trava física (deixar de gastar contexto repetindo o que o ambiente já impede)
 
+### WP11 — Caminhos absolutos locais (levantado pelo autor, 2026-07-28)
+
+O autor apontou os caminhos absolutos como "um grande problema nos repositórios atualmente, incluindo governança". Levantamento mecânico confirma:
+
+| Repositório | Arquivos | Ocorrências |
+|---|---:|---:|
+| `Mancano2026-MA-Thesis` | 172 | **9.895** |
+| `Nahoum-Mancano-2026-Antitrust` | 7 | 419 |
+| `MancanoSync` (raiz) | 8 | 73 |
+| `agentic-research-template` | 3 | 73 |
+| `agentic-institutionalism` | 3 | 58 |
+| `skills` | 5 | 20 |
+| **`cha-affirmative-action-us-brazil`** | **0** | **0** |
+
+Distribuição na tese: 171 arquivos em `9-vers/`, 166 em `4-DA-Code/`, 8 em `3-texts/`, 1 no `NEWS.md`. Forma típica: `file:///c:/Users/Mancano/Documents/MancanoSync/...` em links de Markdown.
+
+**Por que o validador não pegou.** A checagem existe, com dois furos: **T1** varre apenas `.R`/`.qmd` staged — Markdown de governança fica fora; e **T5** cobre `NEWS.md` mas só **linhas adicionadas**, então o que já estava no arquivo nunca é reexaminado. O furo decisivo é outro: a raiz `MancanoSync` está com **`core.hooksPath` desconfigurado** (§ WP10), então o validador **nunca roda lá** — é por isso que ela acumulou 73 ocorrências sem nenhum alerta. Mesma classe de falha do "falha em silêncio".
+
+**O que torna a limpeza não-trivial.** A maior parte das ocorrências da tese está em `9-vers/llm-reviews/` — **transcrições verbatim de sessões**, que a governança deste ecossistema proíbe reescrever. A limpeza precisa separar dois regimes:
+
+| Regime | Exemplos | Ação |
+|---|---|---|
+| **Autorado** | links no `NEWS.md`, planos, `CLAUDE.md`, `README.md`, código em `4-DA-Code/` | corrigir para caminho relativo |
+| **Arquivado** | `llm-reviews/*.md`, entradas antigas do `NEWS.md` | **nunca tocar** — registro histórico |
+
+`cha-affirmative-action-us-brazil` com zero ocorrências é a prova de que o estado limpo é alcançável.
+
+*   **[NEW]** Checagem no `check-integrity` (WP10) varrendo **todo** Markdown autorado, não só linhas adicionadas, com exclusão explícita de `llm-reviews/` e do histórico do `NEWS.md`
+*   **[MODIFY]** Limpeza dos caminhos autorados, repositório por repositório, começando pelos de menor volume (`skills`, `institucionalismo`, template) e deixando a tese por último
+*   **[DEPENDE DE]** WP10 — enquanto `core.hooksPath` puder ficar desconfigurado em silêncio, qualquer limpeza volta a sujar
+
 ---
 
 ## 2. Cronograma de Tarefas (Checklist)
@@ -415,6 +447,16 @@ Cada WP é um commit isolado e revertível com `git revert`. Riscos que exigem c
 | 6 | "Copilot lê AGENTS.md desde ago/2025" sem fonte primária | Confirmar na doc do GitHub antes de deletar o `copilot-instructions.md` do repo da dissertação. |
 | 7 | Template é **público** com adotante externo (§ 0.5) | `NEWS.md` do WP2/WP7 redigido para leitor externo; nota de migração no `README.md`. Não tratar a mudança como interna. |
 | 8 | Retrabalho vs. ferramenta existente | Ler `carlrannaberg/claudekit` § `agents-md/migration.md` **antes** do WP1 — pode substituir parte do script próprio. |
+
+---
+
+## 6b. Nota sobre os timestamps desta rodada (relógio do sistema divergente)
+
+Durante a execução de 2026-07-27/28, o relógio do sistema desta máquina reportava horários **cerca de 5h45 atrasados** em relação ao horário real, confirmado pelo autor (`Get-Date` retornava ~02:05 quando eram ~07:51). A divergência foi corroborada por um carimbo independente: a entrada (55) do `NEWS.md` da dissertação, escrita por outra sessão, marca 07:22 — coerente com o relógio do autor, não com o do sistema.
+
+As entradas de `NEWS.md` escritas nesta sessão em `agentic-research-template`, `skills`, `MancanoSync` (raiz), `cha-affirmative-action-us-brazil`, `Nahoum-Mancano-2026-Antitrust` e `agentic-institutionalism` carregam horários derivados do relógio errado e **não foram reescritas retroativamente**, conforme a regra de que entradas de `NEWS.md` nunca são reescritas. A ordem relativa entre elas está correta; apenas o horário absoluto está deslocado. A entrada da dissertação (56) já usa o horário corrigido.
+
+**Consequência para a governança**: a convenção de timestamp deste ecossistema manda usar "o timestamp real do turno no log da sessão, não uma estimativa de memória" — mas nada verifica se o relógio da máquina está certo. Um agente seguindo a regra à risca produz timestamps errados sem perceber. Item a considerar no `check-integrity` do WP10.
 
 ---
 
