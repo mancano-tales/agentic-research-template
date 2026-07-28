@@ -1,4 +1,5 @@
----
+﻿---
+autor: "Matt Pocock (mattpocock/skills)"
 name: grilling
 description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
 ---
@@ -10,3 +11,4 @@ Ask the questions one at a time, waiting for feedback on each question before co
 If a *fact* can be found by exploring the environment (filesystem, tools, etc.), look it up rather than asking me. The *decisions*, though, are mine — put each one to me and wait for my answer.
 
 Do not act on it until I confirm we have reached a shared understanding.
+

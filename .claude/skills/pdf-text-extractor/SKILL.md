@@ -1,4 +1,5 @@
----
+﻿---
+autor: "Tales Mançano / Ecossistema"
 name: pdf-text-extractor
 description: Automatically extracts plain text and markdown content from PDF files in the workspace or local drives, saving them as text files to save LLM tokens.
 ---
@@ -26,3 +27,4 @@ Rscript scripts/extract_pdf.R --src-dir "/path/to/pdf/folder" --dest-dir "/path/
 ## Structure
 
 - `scripts/extract_pdf.R`: The core extraction script using the R `pdftools` library.
+

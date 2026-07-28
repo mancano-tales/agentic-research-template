@@ -1,6 +1,7 @@
----
+﻿---
+autor: "Tales Mançano / Ecossistema"
 name: sync-skills
-description: SOP para trazer skills de governança atualizadas do repositório mãe (agentic-research-template) para este projeto, ou para promover uma skill melhorada/nova deste projeto de volta para a mãe. Roda tools/sync-skills.ps1/.sh em modo relatório primeiro, pede confirmação item a item antes de aplicar qualquer mudança, e nunca commita automaticamente.
+description: SOP para trazer skills de governança atualizadas do repositório mãe (`skills`) para este projeto, ou para promover uma skill melhorada/nova deste projeto de volta para a mãe. Roda tools/sync-skills.ps1/.sh em modo relatório primeiro, pede confirmação item a item antes de aplicar qualquer mudança, e nunca commita automaticamente.
 ---
 
 # Sincronizar Skills com o Repositório Mãe
@@ -32,10 +33,11 @@ Esta skill é a camada de julgamento em torno do script mecânico `tools/sync-sk
 Não é automatizado por bom motivo: decidir se uma skill é genérica o bastante para virar parte da biblioteca compartilhada é julgamento, não mecânica. Fluxo:
 
 1. Releia a skill local (`.claude/skills/<nome>/SKILL.md` e qualquer arquivo auxiliar) procurando por menções específicas deste projeto — nomes de pastas de conteúdo, arquivos de dados, caminhos de script. **Não deixe nada hardcoded**: se a skill precisa de um dado específico do repositório, ela deve referenciar uma chave em `CLAUDE.md` § "Configuração de Skills" (crie a chave se ainda não existir) em vez de citar o caminho diretamente. Mesmo padrão já usado em `close-task`/`git-cleanup` deste template.
-2. Copie a pasta inteira generalizada para `<caminho-da-mãe>/.claude/skills/<nome>/` (localize o caminho da mãe do mesmo jeito que o script resolve: `tools/.skills-source` se existir, senão a pasta irmã `agentic-research-template`).
+2. Copie a pasta inteira generalizada para `<caminho-da-mãe>/.claude/skills/<nome>/` (localize o caminho da mãe do mesmo jeito que o script resolve: `tools/.skills-source` se existir, senão a pasta irmã `skills`).
 3. Commit **na mãe**, com entrada de `NEWS.md` lá (é um repositório git separado — nunca tente commitar mudanças de dois repositórios numa mesma operação).
 4. Volte ao projeto de origem e, se quiser, rode o passo 1 acima para "puxar de volta" a versão generalizada, confirmando que bate com o que você promoveu.
 
 ## 3. Configuração de fonte não-padrão
 
-Se este projeto não estiver como pasta irmã de `agentic-research-template` (layout diferente de máquina, clone em outro lugar), crie `tools/.skills-source` com o caminho absoluto ou relativo do repositório mãe, uma linha só, sem aspas.
+Se este projeto não estiver como pasta irmã de `skills` (layout diferente de máquina, clone em outro lugar), crie `tools/.skills-source` com o caminho absoluto ou relativo do repositório mãe, uma linha só, sem aspas.
+

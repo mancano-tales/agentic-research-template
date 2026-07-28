@@ -3,6 +3,24 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-28 01:10 — Primeira sincronização real com a nova mãe; regressão de performance corrigida
+
+Executado `sync-skills --apply all` contra o repositório `skills`, agora a mãe. As 11 skills deste template estão **em dia** com ela pela primeira vez desde que as duas passaram a coexistir.
+
+**Achado durante a sincronização.** O `sync-skills/SKILL.md` que veio da mãe ainda descrevia `agentic-research-template` como repositório mãe, em três lugares — inclusive no passo que instrui o consumidor a **promover melhorias de volta**. Um consumidor seguindo aquela skill mandaria a correção para o repositório errado. Corrigido na mãe (`skills@8a0f246`) e puxado de volta para cá, o que exercitou o ciclo mãe→consumidor de ponta a ponta.
+
+**Regressão de performance, introduzida e corrigida na mesma rodada.** A normalização de conteúdo custa processos por arquivo, e o relatório hasheava as 101 skills da mãe — 90 delas não instaladas aqui e portanto com hash que nunca seria comparado com nada. O primeiro `--apply all` estourou 120 segundos. Corrigido pulando o hash quando a skill não existe localmente: **29 segundos**, e o resultado é idêntico. A lição vale registrar: o custo estava em trabalho que o próprio desenho novo do relatório já tinha tornado desnecessário.
+
+Criado `tools/.skills-source` apontando para `../skills` — este template nunca teve o arquivo porque era a mãe. Na mesma rodada, o `.skills-source` da raiz `MancanoSync` foi corrigido: apontava para `./agentic-research-template`, a mãe antiga.
+
+**Nota para worktrees**: a detecção automática resolve a mãe como pasta irmã, o que não funciona de dentro de um worktree (`repo.worktrees/branch/`). Use `--source` explícito nesse caso.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-28 01:10 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "chore(skills): primeira sincronização com a nova mãe e correção de performance do relatório"
+- **Arquivos afetados**: `.claude/skills/` (9 skills), `tools/.skills-source`, `tools/sync-skills.ps1`, `tools/sync-skills.sh`, `NEWS.md`
+
 ## 2026-07-28 00:40 — Template deixa de ser mãe das skills; `sync-skills` corrigido em dois defeitos
 
 **Decisão de arquitetura (autor).** O ecossistema tinha **duas mães declaradas** para as mesmas skills: este template se declarava mãe das skills de governança, e o repositório irmão `skills` reunia as mesmas 11 mais ~90 outras. A divisão passa a ser: `skills` é dono das skills (os procedimentos, o *como*); este template é dono de hooks, policy-as-code, validador e estrutura (o que torna a regra obrigatória). Este template vira **consumidor**.

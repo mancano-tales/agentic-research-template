@@ -1,4 +1,5 @@
----
+﻿---
+autor: "Tales Mançano / Ecossistema"
 name: export-conversation
 description: Exporta a conversa atual (ou uma sessão passada) do Claude Code ou Antigravity como Markdown completo — com timestamps, thinking e chamadas de ferramentas em seções recolhíveis — para 9-vers/llm-reviews/ usando o script R.
 ---
@@ -31,3 +32,4 @@ Esta skill é **idêntica em todo repositório que a usa**. O único dado espec�
 - Thinking, parâmetros de ferramenta (JSON) e resultados de ferramenta na íntegra, cada um em `<details>` recolhível.
 - Resumos de compactação de contexto viram seção própria (`## 📦`).
 - UTF-8 sem BOM.
+

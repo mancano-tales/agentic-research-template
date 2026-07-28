@@ -147,10 +147,19 @@ $available = @()
 
 foreach ($skill in $motherSkills) {
     $name = $skill.Name
+    $localDir = Join-Path $LocalSkillsDir $name
+
+    # Skill não instalada aqui: só conta, NÃO hasheia. Hashear as 90 skills da mãe
+    # que este repositório não usa fazia o relatório levar minutos — a normalização
+    # de conteúdo custa por arquivo, e 90% desse trabalho era sobre pastas cujo hash
+    # nunca seria comparado com nada.
+    if (-not (Test-Path -Path $localDir -PathType Container)) {
+        $available += $name
+        continue
+    }
+
     $motherHash = Get-FolderHash -FolderPath $skill.FullName
     if ($null -eq $motherHash) { continue }
-
-    $localDir = Join-Path $LocalSkillsDir $name
     $localHash = Get-FolderHash -FolderPath $localDir
 
     if ($null -eq $localHash) {

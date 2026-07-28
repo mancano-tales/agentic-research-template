@@ -131,10 +131,19 @@ AVAILABLE=()
 for skill_dir in "$SOURCE_SKILLS_DIR"/*/; do
   [[ -d "$skill_dir" ]] || continue
   name="$(basename "$skill_dir")"
+  local_dir="$LOCAL_SKILLS_DIR/$name"
+
+  # Skill não instalada aqui: só conta, NÃO hasheia. Hashear as 90 skills da mãe
+  # que este repositório não usa fazia o relatório levar minutos em Git Bash no
+  # Windows — a normalização de conteúdo custa processos por arquivo, e 90% desse
+  # trabalho era sobre pastas cujo hash nunca seria comparado com nada.
+  if [[ ! -d "$local_dir" ]]; then
+    AVAILABLE+=("$name")
+    continue
+  fi
+
   mother_hash="$(folder_hash "${skill_dir%/}")"
   [[ -n "$mother_hash" ]] || continue
-
-  local_dir="$LOCAL_SKILLS_DIR/$name"
   local_hash="$(folder_hash "$local_dir")"
 
   if [[ -z "$local_hash" ]]; then

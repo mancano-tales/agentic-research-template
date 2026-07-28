@@ -1,4 +1,5 @@
----
+﻿---
+autor: "Tales Mançano / Ecossistema"
 name: close-task
 description: Cerimônia completa de encerramento de tarefa. Executa todo o workflow de auditoria: marca planos como concluídos, escreve no NEWS.md, atualiza o inventário de logs, exporta a conversa da sessão atual e faz o commit seguro. Só rodar uma vez no final definitivo da sessão.
 ---
@@ -74,3 +75,4 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
   3. Se o lock ainda existir depois disso, **PARE e avise o usuário** — não conclua sozinho que o lock está órfão, e **nunca apague `.git/index.lock` por conta própria**. Um lock órfão (processo travado/morto) parece idêntico a um lock ativo do ponto de vista do agente; distinguir os dois exige checar processos em execução (`tasklist`/`ps`) e a idade do arquivo, e a decisão de remover é do usuário.
 
 Ao finalizar todos os 6 passos com sucesso, comunique ao usuário que a tarefa foi encerrada e que o repositório está limpo, logado, e o commit da sessão foi realizado. Liste explicitamente qualquer arquivo que ficou de fora do commit (ex.: caminhos protegidos por `diretorio_autoria_primaria`) e por quê. Pode então aguardar o encerramento da conversa.
+
