@@ -46,6 +46,7 @@ news: []
 <!-- BEGIN_PLAN_INDEX -->
 | Plano | Status | Executor | O que é |
 |---|---|---|---|
+| `2026-07-28_Plano_Config_Diretorio_Governanca.md` | **ATIVO** | — (aguarda aprovação do autor) | Promover a chave `diretorio_governanca` — skills/ferramentas config-driven, sem hardcode de `9-vers/` |
 | `2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md` | CONCLUÍDO (2026-07-14 12:45) | Claude Sonnet 5 (Claude Code, VS Code) | Auditoria — Adição de §4 (skills globais superpowers) em sync-skills/SKILL.md |
 | `2026-07-14_Plano_Skills_Compartilhadas_TODO.md` | CONCLUÍDO (2026-07-14 11:45) | Claude Sonnet 5 (Claude Code, VS Code) | Skills compartilhadas entre projetos (repositório mãe) e convenção definitiva de TODO.md |
 | `2026-07-13_Plano_Sincronizar_Governanca_Com_Tese.md` | CONCLUÍDO (2026-07-13 22:37) | Claude Sonnet 5 (Claude Code, VS Code) | Sincronizar mancano-project-template com o estado atual de governança do repositório Mancano2026-MA-Thesis |

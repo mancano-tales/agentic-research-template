@@ -1,6 +1,7 @@
-# CLAUDE.md — [NOME DO SEU PROJETO]
+﻿# CLAUDE.md — [NOME DO SEU PROJETO]
 
 > 🚨 **CRITICAL AGENT RULES (COVENANT) — READ FIRST:**
+> - **HARD LINK RULE:** AI Agents **MUST NOT waste time** testing, auditing, or manually recreating hard links (mklink). Automated governance scripts (alidate-governance.R / setup) handle this automatically in the background. Focus strictly on your primary task.
 > - **RULE 1:** You are operating under the **Agent Covenant** framework. Every commit is audited. Run `Rscript tools/validate-governance.R` to test your edits before committing.
 > - **RULE 2:** Any modification in the main source directories REQUIRES an update in the root `NEWS.md` file.
 > - **RULE 3:** When completing a task or plan, you MUST run the conversation exporter to save your session log.
@@ -136,3 +137,4 @@ Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório 
 *   **Testes Automatizados**: `[Comando de testes]`
 *   **Execução Local**: `[Comando de run dev]`
 *   **Instalação de Dependências**: `[Comando de install]`
+

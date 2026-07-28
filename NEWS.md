@@ -3,6 +3,22 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-28 01:54 — Higiene pós-reversão + plano para tornar as skills config-driven no diretório de governança
+
+Rodada de refinamento e limpeza. Três correções de higiene, todas herança da renomeação do repositório (`mancano-project-template` → `agentic-research-template`) e da padronização de diretório que foi tentada e revertida (`78b5315` → `40bc2d6`):
+
+1. **`GUIDANCE.md`** — os dois únicos documentos de governança ativos que ainda carregavam links `file:///` absolutos locais apontando para o **nome antigo do repositório** (`mancano-project-template`) foram convertidos para links Markdown relativos (`CLAUDE.md`, `9-vers/GUIDANCE_MAP.md`). É exatamente o tipo de vazamento que o T5 do `validate-governance.R` bloqueia — passavam batido só porque o T5 escaneia apenas linhas *adicionadas* e estas eram pré-existentes. Crítico num template feito para ser clonado.
+2. **`.cursor/rules/governance.mdc`** — cabeçalho ainda dizia `(mancano-project-template)`; atualizado para `(agentic-research-template)`.
+3. **Diretório órfão `0-governance/`** — a padronização revertida moveu os backups do self-heal para `0-governance/backups/`; o `git revert` restaurou o código (que volta a apontar para `9-vers/backups/`) mas não os arquivos gitignorados, deixando um `0-governance/` órfão contendo só `.bak.*`. Os 7 backups foram consolidados em `9-vers/backups/` (onde o código aponta) e o diretório órfão removido. Nenhum backup deletado; nada rastreado pelo git foi afetado (era tudo gitignorado).
+
+Além da limpeza, foi **proposto** (não executado) o plano `2026-07-28_Plano_Config_Diretorio_Governanca.md` (status ATIVO, aguardando aprovação): promover a chave `diretorio_governanca` à § Configuração de Skills, tornando as 4 skills de governança (`close-task`, `export-conversation`, `git-cleanup`, `request-audit`) e as ferramentas R config-driven em vez de hardcodarem `9-vers/`. Motivação: o próprio `CLAUDE.md` proíbe hardcode de convenção de projeto nas skills, mas essas 4 violam isso — o que forçou o consumidor `MancanoSync` (que usa `0-meta/`) a manter um remendo textual ("leia `9-vers/` como `0-meta/`"). A refatoração não foi executada de propósito: é mudança arquitetural com efeito de propagação e a padronização física do diretório já foi revertida uma vez, então exige aprovação explícita do autor (§ Task Planning Policy).
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-28 01:54 (Horário Local)
+- **Agente**: Claude Opus 4.8 / Claude Code / VS Code
+- **Mensagem do Commit**: "chore(governance): fix stale absolute paths, drop orphaned 0-governance/, propose config-driven governance-dir plan"
+- **Arquivos afetados**: `GUIDANCE.md`, `.cursor/rules/governance.mdc`, `9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md`, `9-vers/plan/README.md`, `TODO.md`, `NEWS.md` (e `9-vers/backups/` consolidado, gitignorado)
+
 ## 2026-07-17 10:38 — `disable-model-invocation` revertida para `false` em grill-me/grill-with-docs/edit-article
 
 Decisão do autor (2026-07-17): as três skills portadas de Matt Pocock que vinham com `disable-model-invocation: true` (ação só-por-pedido-explícito, preservado fielmente do original desde a instalação em 2026-07-14) passam a `false` — o autor quer as três invocáveis pelo agente como as demais skills do template, em todos os consumidores. Atualizado em conjunto o `agents/openai.yaml` de cada uma (`allow_implicit_invocation: true`) para não divergir entre plataformas (Claude vs. Copilot/OpenAI). `CLAUDE.md` (§ Skills Compartilhadas) atualizado para refletir a mudança. Como de praxe, a edição do `CLAUDE.md` quebrou o hard link físico de `AGENTS.md`/`.github/copilot-instructions.md` — backups dos divergentes salvos em `9-vers/backups/` antes de recriar os links.

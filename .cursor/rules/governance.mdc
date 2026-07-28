@@ -4,7 +4,7 @@ globs: 9-vers/plan/**/*.md, 9-vers/llm-reviews/**/*.md, NEWS.md, CLAUDE.md
 alwaysApply: true
 ---
 
-# Regras de Governança e Planos de IA (mancano-project-template)
+# Regras de Governança e Planos de IA (agentic-research-template)
 
 Este repositório impõe um controle rígido sobre o trabalho de agentes de IA para garantir a integridade analítica e evitar a deriva cognitiva.
 
