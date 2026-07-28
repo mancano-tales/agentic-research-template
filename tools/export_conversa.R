@@ -7,7 +7,8 @@
 # O primeiro argumento pode ser um caminho completo para o .jsonl ou um UUID
 # (ou prefixo de UUID) de sessão, resolvido contra as pastas de sessões.
 #
-# Saída: 9-vers/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
+# Saída: {diretorio_governanca}/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
+#         (GOV_DIR env var, default "9-vers" — ver CLAUDE.md § "Configuração de Skills")
 # ==============================================================================
 
 suppressPackageStartupMessages(library(jsonlite))
@@ -30,7 +31,8 @@ PASTA_ANTIGRAVITY <- file.path(
   Sys.getenv("USERPROFILE", unset = path.expand("~")),
   ".gemini", "antigravity", "brain"
 )
-PASTA_SAIDA <- file.path(getwd(), "9-vers", "llm-reviews")
+GOV_DIR <- Sys.getenv("GOV_DIR", unset = "9-vers")
+PASTA_SAIDA <- file.path(getwd(), GOV_DIR, "llm-reviews")
 FUSO <- "America/Sao_Paulo"
 
 # ── Argumentos ────────────────────────────────────────────────────────────────

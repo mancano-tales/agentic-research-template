@@ -3,6 +3,22 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-28 — Parametrização config-driven do diretório de governança (execução do plano)
+
+Execução do plano `2026-07-28_Plano_Config_Diretorio_Governanca.md` (aprovado pelo autor). As 4 tarefas foram concluídas:
+
+1. **`CLAUDE.md` § Configuração de Skills** — adicionada a chave `diretorio_governanca` (`9-vers` como default da mãe; consumidores sobrescrevem com `GOV_DIR=<valor>`).
+2. **4 skills de governança** (`close-task`, `export-conversation`, `git-cleanup`, `request-audit`) — todo literal `9-vers/` substituído por `{gov}`, com nota de convenção `{gov} = diretorio_governanca` adicionada no topo de cada skill. Decisão de design: referência pura (sem exemplo `(9-vers/)` embutido) — o valor só vive na tabela do `CLAUDE.md`, garantindo que o hash das skills seja idêntico entre repositórios mãe e consumidores.
+3. **`tools/validate-governance.R`** — extraído `GOV_DIR <- Sys.getenv("GOV_DIR", unset = "9-vers")` no topo; todas as constantes de caminho (`PATH_PLAN_DIR`, `PATH_REVIEWS_INDEX`, `PATH_BACKUP_DIR`), o filtro T6 e a lista `GOVERNANCE_DOCS` derivam de `GOV_DIR`.
+4. **`tools/export_conversa.R`** — idem: `GOV_DIR` extraído antes de `PASTA_SAIDA`.
+5. **`9-vers/GUIDANCE_MAP.md` e `.cursor/rules/governance.mdc`** — nota de configurabilidade adicionada; `9-vers/` mantido como exemplo documentando o default da mãe.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-28 (Horário de Brasília — hora exata não recuperável no ambiente remoto)
+- **Agente**: Claude Sonnet 4.6 / Claude Code (web, remote)
+- **Mensagem do Commit**: "feat(governance): parametrize GOV_DIR — config-driven diretorio_governanca in skills and R tools"
+- **Arquivos afetados**: CLAUDE.md, .claude/skills/close-task/SKILL.md, .claude/skills/export-conversation/SKILL.md, .claude/skills/git-cleanup/SKILL.md, .claude/skills/request-audit/SKILL.md, tools/validate-governance.R, tools/export_conversa.R, 9-vers/GUIDANCE_MAP.md, .cursor/rules/governance.mdc, 9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md, NEWS.md
+
 ## 2026-07-28 01:54 — Higiene pós-reversão + plano para tornar as skills config-driven no diretório de governança
 
 Rodada de refinamento e limpeza. Três correções de higiene, todas herança da renomeação do repositório (`mancano-project-template` → `agentic-research-template`) e da padronização de diretório que foi tentada e revertida (`78b5315` → `40bc2d6`):

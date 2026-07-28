@@ -1,21 +1,21 @@
 ---
 tipo: Plano
 titulo: "Promover a chave de configuração diretorio_governanca (skills config-driven, sem hardcode de 9-vers/)"
-status: ATIVO
+status: CONCLUÍDO
 criado: "2026-07-28 01:54"
-concluido: null
+concluido: "2026-07-28"
 agentes:
   orquestrador: "Claude Opus 4.8 (Claude Code, VS Code)"
-  executor: null
+  executor: "Claude Sonnet 4.6 (Claude Code, web)"
   auditor: null
 autor_humano: "Tales Mançano"
 tarefas:
-  - { desc: "Adicionar chave diretorio_governanca à tabela § Configuração de Skills do CLAUDE.md", status: pendente, data: null }
-  - { desc: "Trocar 9-vers/ hardcoded por referência à chave nas 4 skills de governança", status: pendente, data: null }
-  - { desc: "Parametrizar PATH_* de 9-vers em tools/validate-governance.R e export_conversa.R", status: pendente, data: null }
-  - { desc: "Atualizar README, GUIDANCE_MAP e .cursor com a convenção config-driven", status: pendente, data: null }
+  - { desc: "Adicionar chave diretorio_governanca à tabela § Configuração de Skills do CLAUDE.md", status: concluida, data: "2026-07-28" }
+  - { desc: "Trocar 9-vers/ hardcoded por referência à chave nas 4 skills de governança", status: concluida, data: "2026-07-28" }
+  - { desc: "Parametrizar PATH_* de 9-vers em tools/validate-governance.R e export_conversa.R", status: concluida, data: "2026-07-28" }
+  - { desc: "Atualizar README, GUIDANCE_MAP e .cursor com a convenção config-driven", status: concluida, data: "2026-07-28" }
 relacionados: ["2026-07-14_Plano_Skills_Compartilhadas_TODO.md"]
-news: []
+news: ["2026-07-28 — Parametrização config-driven do diretório de governança"]
 ---
 
 # Plano — Promover a chave de configuração `diretorio_governanca`

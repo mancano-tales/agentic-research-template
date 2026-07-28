@@ -6,6 +6,8 @@ Este documento serve como o **Sitemap de Orientação e Governança** do reposit
 
 ## 1. Mapa de Diretrizes por Diretório
 
+> **Nota de configurabilidade**: o nome do diretório de governança (`9-vers/` neste repositório mãe) é configurável via a chave `diretorio_governanca` em `CLAUDE.md` § "Configuração de Skills" e pela variável de ambiente `GOV_DIR` nas ferramentas R. Repositórios consumidores podem usar outro nome (ex.: `0-meta/`) sem alterar o texto das skills.
+
 | Diretório | Função Primária | Arquivo de Diretriz Ativo | Escopo e Governança da Diretriz |
 |---|---|---|---|
 | `/` (Raiz) | Configurações globais e sumários | [CLAUDE.md](../CLAUDE.md) / [AGENTS.md](../AGENTS.md) | **Única fonte de verdade** sobre o estado atual do projeto, regras de precedência de documentos, gotchas de execução e regras anti-contaminação de agentes. |

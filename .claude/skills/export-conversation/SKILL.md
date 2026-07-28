@@ -1,11 +1,13 @@
 ---
 name: export-conversation
-description: Exporta a conversa atual (ou uma sessão passada) do Claude Code ou Antigravity como Markdown completo — com timestamps, thinking e chamadas de ferramentas em seções recolhíveis — para 9-vers/llm-reviews/ usando o script R.
+description: Exporta a conversa atual (ou uma sessão passada) do Claude Code ou Antigravity como Markdown completo — com timestamps, thinking e chamadas de ferramentas em seções recolhíveis — para {gov}/llm-reviews/ usando o script R. ({gov} = chave `diretorio_governanca` em CLAUDE.md § "Configuração de Skills")
 ---
 
-# Exportar conversa para 9-vers/llm-reviews/
+# Exportar conversa para o diretório de logs ({gov}/llm-reviews/)
 
-Esta skill é **idêntica em todo repositório que a usa**. O único dado específico deste projeto que ela consome é o caminho do script (chave `script_exportar_conversa` em `CLAUDE.md` § "Configuração de Skills").
+Esta skill é **idêntica em todo repositório que a usa**. Os únicos dados específicos deste projeto que ela consome são o caminho do script (chave `script_exportar_conversa`) e o diretório de governança (chave `diretorio_governanca`), ambos em `CLAUDE.md` § "Configuração de Skills".
+
+> **Convenção de caminho**: neste documento, `{gov}` representa o valor da chave `diretorio_governanca` em `CLAUDE.md` § "Configuração de Skills".
 
 ## O que fazer
 

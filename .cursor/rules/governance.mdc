@@ -2,6 +2,9 @@
 description: Forçar regras rígidas de governança, auditoria de conversas e planos atômicos
 globs: 9-vers/plan/**/*.md, 9-vers/llm-reviews/**/*.md, NEWS.md, CLAUDE.md
 alwaysApply: true
+# Nota: os globs acima usam "9-vers/" — o valor padrão deste repositório mãe.
+# Se o seu repositório consumidor usa outro nome (chave `diretorio_governanca`
+# em CLAUDE.md § "Configuração de Skills"), atualize os globs correspondentemente.
 ---
 
 # Regras de Governança e Planos de IA (agentic-research-template)

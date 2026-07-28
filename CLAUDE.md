@@ -118,6 +118,7 @@ Consumidores puxam atualizações com `tools/sync-skills.ps1`/`.sh` (relatório 
 
 | Chave | Usada por | Valor neste repositório |
 |---|---|---|
+| `diretorio_governanca` | `close-task`, `export-conversation`, `git-cleanup`, `request-audit`, `tools/*.R` | `9-vers` (padrão do template — consumidores sobrescrevem com `GOV_DIR=<valor>` no ambiente; ex.: `MancanoSync` usa `0-meta`) |
 | `diretorio_autoria_primaria` | `close-task`, `git-cleanup` | [PLACEHOLDER — se este projeto tem uma pasta de prosa/notebooks de autoria humana que agentes não devem comitar sem autorização, declare o caminho aqui] |
 | `arquivo_gerenciado_externamente` | `git-cleanup` | [PLACEHOLDER — se algum arquivo é escrito por uma ferramenta externa (biblioteca de citação, lockfile, schema gerado) e agentes nunca devem editá-lo manualmente, declare o caminho aqui] |
 | `script_exportar_conversa` | `close-task`, `export-conversation` | `tools/export_conversa.R` (padrão do template — ajuste se movido) |

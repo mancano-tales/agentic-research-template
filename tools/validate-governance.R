@@ -16,9 +16,14 @@
 
 # ── Configurações de Caminho ──────────────────────────────────────────────────
 CWD <- getwd()
-PATH_PLAN_DIR <- file.path(CWD, "9-vers", "plan")
+# GOV_DIR: nome do diretório de governança deste repositório.
+# Valor padrão: "9-vers" (repositório mãe). Consumidores sobrescrevem com a
+# variável de ambiente GOV_DIR (ex.: GOV_DIR=0-meta Rscript tools/validate-governance.R).
+# Corresponde à chave `diretorio_governanca` em CLAUDE.md § "Configuração de Skills".
+GOV_DIR <- Sys.getenv("GOV_DIR", unset = "9-vers")
+PATH_PLAN_DIR <- file.path(CWD, GOV_DIR, "plan")
 PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
-PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
+PATH_REVIEWS_INDEX <- file.path(CWD, GOV_DIR, "llm-reviews", "README.md")
 
 # Backups do self-heal de hard link (seção 0) vão para uma subpasta dedicada,
 # não a raiz do repo — antes de 2026-07-15 eram escritos direto em
@@ -26,10 +31,10 @@ PATH_REVIEWS_INDEX <- file.path(CWD, "9-vers", "llm-reviews", "README.md")
 # acumulava (achado em um repositório consumidor: 5 arquivos reais na raiz)
 # e poluía visualmente o diretório principal do repositório. Gitignorado por
 # *.bak.* já existente.
-PATH_BACKUP_DIR <- file.path(CWD, "9-vers", "backups")
+PATH_BACKUP_DIR <- file.path(CWD, GOV_DIR, "backups")
 make_backup_path <- function(basename) {
   dir.create(PATH_BACKUP_DIR, recursive = TRUE, showWarnings = FALSE)
-  file.path("9-vers", "backups", basename)
+  file.path(GOV_DIR, "backups", basename)
 }
 
 # ── Helpers de Impressão ──────────────────────────────────────────────────────
@@ -657,7 +662,7 @@ get_staged_added_lines <- function(filepath) {
     return(character(0))
   }
   # useBytes = TRUE: arquivos grandes com conteúdo exótico (ex.: os próprios
-  # exports de conversa em 9-vers/llm-reviews/, que embutem JSON com
+  # exports de conversa em {GOV_DIR}/llm-reviews/, que embutem JSON com
   # sequências de escape longas) fazem o grepl padrão (baseado em locale)
   # lançar "unable to translate to a wide string" / "input string is
   # invalid" — achado ao vivo commitando este mesmo arquivo. Os padrões
@@ -707,13 +712,13 @@ if (length(staged_files) > 0) {
 # conflito é um problema em qualquer arquivo de texto, inclusive .md.
 #
 # Exceção auto-referencial (mesmo padrão do T1 com "MancanoSync/"): os
-# exports de conversa em 9-vers/llm-reviews/ são transcrição verbatim de
+# exports de conversa em {GOV_DIR}/llm-reviews/ são transcrição verbatim de
 # sessões de agente — qualquer teste feito ali DENTRO da própria sessão
 # (ex.: testar esta mesma regex contra ">>>>>>> outra-branch") fica
 # registrado literalmente no log e dispararia T6 sem ser um conflito de
 # verdade. Achado ao vivo commitando o export desta sessão.
 CONFLICT_MARKER_REGEX <- r"{^(<{7}|>{7}|={7}$)}"
-t6_files <- staged_files[!grepl("^9-vers/llm-reviews/", staged_files)]
+t6_files <- staged_files[!startsWith(staged_files, paste0(GOV_DIR, "/llm-reviews/"))]
 
 if (length(t6_files) > 0) {
   cat_info(sprintf(
@@ -803,8 +808,8 @@ if (length(rq_files) > 0) {
 # É pega; entradas antigas nunca são escaneadas de novo).
 GOVERNANCE_DOCS <- c(
   "CLAUDE.md", "AGENTS.md", "README.md", "GUIDANCE.md",
-  "NEWS.md", "9-vers/GUIDANCE_MAP.md",
-  "9-vers/plan/README.md", "9-vers/llm-reviews/README.md"
+  "NEWS.md", paste0(GOV_DIR, "/GUIDANCE_MAP.md"),
+  paste0(GOV_DIR, "/plan/README.md"), paste0(GOV_DIR, "/llm-reviews/README.md")
 )
 gov_files <- staged_files[staged_files %in% GOVERNANCE_DOCS]
 
