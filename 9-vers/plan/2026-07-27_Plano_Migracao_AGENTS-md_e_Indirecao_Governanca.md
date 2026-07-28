@@ -21,7 +21,8 @@ tarefas:
   - { desc: "WP8 — Dois ritmos de trabalho (Fluxo Rápido vs Fluxo Arquitetural) com gatilho mecânico", status: pendente, data: null }
   - { desc: "WP9 — Auditoria silenciosa via Stop hook; avaliar SpecStory como substituto do export_conversa.R", status: pendente, data: null }
   - { desc: "WP10 — Migrar travas de prompt para PreToolUse hooks; reduzir dependência de R", status: pendente, data: null }
-  - { desc: "WP11 — Eliminar caminhos absolutos locais (10.5k+ ocorrências, 7 repositórios)", status: pendente, data: null }
+  - { desc: "WP11 — Estancar novos caminhos absolutos (trava que falha o commit); amortizar o passivo depois, sem meta", status: pendente, data: null }
+  - { desc: "DECISÃO ADIADA — dividir ou não o diretório de governança (retomar junto com WP11)", status: adiada, data: "2026-07-28 07:51" }
 relacionados:
   - "9-vers/plan/2026-07-14_Plano_Skills_Compartilhadas_TODO.md"
 news: []
@@ -80,6 +81,26 @@ O ecossistema tinha **duas mães declaradas** para as mesmas skills. Ficou defin
 - **WP0 — Developer Mode** (Configurações → Sistema → Para desenvolvedores). Trava o WP1 inteiro.
 - **Pastas vazias na raiz**: `MancanoSync/9-vers/` e `MancanoSync/0-governance/` ficaram vazias após o WP4 e **não foram removidas** — o `CLAUDE.md` da raiz exige autorização expressa para deletar pasta da raiz.
 - **SpecStory (WP9)**: o autor instalou a extensão em 2026-07-27 e está testando. Ressalva registrada: não cobre Antigravity, que gera parte dos exports.
+
+### 💭 Decisão adiada pelo autor — dividir ou não o diretório de governança
+
+**Status: em aberto, adiada deliberadamente em 2026-07-28.** Não decidir agora é a decisão; não trate como pendência a ser resolvida por conta própria.
+
+A questão: o diretório de governança guarda hoje três coisas com naturezas diferentes.
+
+| Conteúdo | Natureza | Tamanho |
+|---|---|---|
+| `plan/` | autorado, vivo, relido | pequeno |
+| `llm-reviews/` | gerado, imutável, forense | **402KB por sessão** |
+| `backups/` | artefato de máquina | descartável — some no WP1 |
+
+**Evidência a favor de dividir**, medida: numa busca por `9-vers` no template, **145 dos 242 resultados vinham de transcrições** — 60% de ruído em toda busca de código sobre a pasta de governança. E o crescimento é sem teto: um arquivo por sessão, histórico de git nunca encolhe.
+
+**Recomendação registrada (não executada)**: duas pastas. Governança operacional visível e pequena; transcrições em pasta com prefixo de ponto — some do `rg` rotineiro, continua presente para auditoria. É o que o SpecStory faz (`.specstory/history/`). Note que o argumento contra prefixo de ponto que vale para governança (agentes e humanos leem o tempo todo) **inverte** para transcrições: ninguém as lê rotineiramente.
+
+**Por que não foi feito**: o autor preferiu avaliar com calma. Além disso, dividir antes do WP3 teria multiplicado os caminhos fixados no código — hoje, com `GOV_DIR`, o custo de dividir caiu para uma variável a mais.
+
+**Relação com o WP11**: a divisão facilita a limpeza de caminhos absolutos, porque separa fisicamente o que pode ser reescrito (autorado) do que nunca pode (transcrição verbatim). As duas decisões devem ser retomadas juntas.
 
 ### ⚠️ Armadilhas descobertas na prática — não repita
 
@@ -323,9 +344,22 @@ Distribuição na tese: 171 arquivos em `9-vers/`, 166 em `4-DA-Code/`, 8 em `3-
 
 `cha-affirmative-action-us-brazil` com zero ocorrências é a prova de que o estado limpo é alcançável.
 
+**Prioridade definida pelo autor (2026-07-28): estancar antes de limpar.** O objetivo primário do WP11 é **impedir que novos caminhos absolutos entrem**, não zerar os 10.538 existentes. Razões:
+
+1. Limpar 10.538 ocorrências sem trava é trabalho que se desfaz sozinho — a raiz acumulou 73 justamente por não ter trava ativa.
+2. Boa parte do passivo está em transcrições verbatim que **não podem** ser reescritas. O número "10.538" nunca vai a zero por decisão de governança, e perseguir zero seria perseguir uma meta impossível.
+3. Com a entrada estancada, o passivo vira dívida estável em vez de crescente — e pode ser amortizado aos poucos, ou nunca, sem risco.
+
+**Fase 1 — estancar (prioritária):**
 *   **[NEW]** Checagem no `check-integrity` (WP10) varrendo **todo** Markdown autorado, não só linhas adicionadas, com exclusão explícita de `llm-reviews/` e do histórico do `NEWS.md`
-*   **[MODIFY]** Limpeza dos caminhos autorados, repositório por repositório, começando pelos de menor volume (`skills`, `institucionalismo`, template) e deixando a tese por último
-*   **[DEPENDE DE]** WP10 — enquanto `core.hooksPath` puder ficar desconfigurado em silêncio, qualquer limpeza volta a sujar
+*   **[NEW]** A checagem deve **falhar o commit**, não avisar. Aviso que não bloqueia é como a situação atual, que produziu 10.538 ocorrências
+*   **[DEPENDE DE]** WP10 — enquanto `core.hooksPath` puder ficar desconfigurado em silêncio (caso atual da raiz `MancanoSync`), a trava não existe onde mais importa
+*   **[NEW]** Considerar cobrir também o padrão de link Markdown `[texto](file:///c:/...)`, que é a forma dominante encontrada — a checagem T1 atual procura caminho absoluto em código, não em link de Markdown
+
+**Fase 2 — amortizar (oportunística, sem meta de prazo):**
+*   **[MODIFY]** Limpeza dos caminhos **autorados**, repositório por repositório, do menor volume para o maior (`skills` 20 → `institucionalismo` 58 → template 73 → raiz 73 → `Nahoum` 419 → tese por último)
+*   **[NUNCA]** `llm-reviews/*.md` e entradas antigas do `NEWS.md` — registro histórico, não se reescreve
+*   Fazer junto com a decisão de dividir o diretório de governança (ver § COMECE AQUI), que separa fisicamente o reescrevível do intocável
 
 ---
 
