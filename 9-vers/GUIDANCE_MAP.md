@@ -10,7 +10,7 @@ Este documento serve como o **Sitemap de Orientação e Governança** do reposit
 
 | Diretório | Função Primária | Arquivo de Diretriz Ativo | Escopo e Governança da Diretriz |
 |---|---|---|---|
-| `/` (Raiz) | Configurações globais e sumários | [CLAUDE.md](../CLAUDE.md) / [AGENTS.md](../AGENTS.md) | **Única fonte de verdade** sobre o estado atual do projeto, regras de precedência de documentos, gotchas de execução e regras anti-contaminação de agentes. |
+| `/` (Raiz) | Configurações globais e sumários | [AGENTS.md](../AGENTS.md) | **Única fonte de verdade** sobre o estado atual do projeto, regras de precedência de documentos, gotchas de execução e regras anti-contaminação de agentes. |
 | `tools/` | Scripts de utilidade geral e QA | `validate-governance.R` | Regras de validação automatizada de metadados de planos e indexadores. |
 | `9-vers/plan/` | Planejamento de tarefas ativo | [plan/README.md](plan/README.md) | Índice de status dos planos de trabalho ativos e regras de frontmatter YAML estruturado para novos planos. |
 | `9-vers/llm-reviews/` | Registro de auditoria de logs de IAs | [llm-reviews/README.md](llm-reviews/README.md) | Inventário de conversas de IAs exportadas associando planos concluídos aos seus UUIDs de chat. |

@@ -1,7 +1,7 @@
-﻿# CLAUDE.md — [NOME DO SEU PROJETO]
+﻿# AGENTS.md — [NOME DO SEU PROJETO]
 
 > 🚨 **CRITICAL AGENT RULES (COVENANT) — READ FIRST:**
-> - **HARD LINK RULE:** AI Agents **MUST NOT waste time** testing, auditing, or manually recreating hard links (mklink). Automated governance scripts (alidate-governance.R / setup) handle this automatically in the background. Focus strictly on your primary task.
+> - **RULE 0 — THIS IS THE ONLY FILE:** `AGENTS.md` é o **único** arquivo de instruções deste repositório, e é o arquivo real. `CLAUDE.md` contém apenas `@AGENTS.md` (import do Claude Code) — nunca escreva conteúdo nele. Não existem mais hard links, cópias espelhadas, `.github/copilot-instructions.md` nem `.cursor/rules/`: Claude Code, Copilot e Cursor leem o padrão aberto `AGENTS.md` diretamente. Se você veio de uma versão anterior procurando o self-heal de `mklink`, ele foi removido — não o recrie.
 > - **RULE 1:** You are operating under the **Agent Covenant** framework. Every commit is audited. Run `Rscript tools/validate-governance.R` to test your edits before committing.
 > - **RULE 2:** Any modification in the main source directories REQUIRES an update in the root `NEWS.md` file.
 > - **RULE 3:** When completing a task or plan, you MUST run the conversation exporter to save your session log.
@@ -37,8 +37,8 @@
 
 | Document | Audience | Function | Update trigger |
 |---|---|---|---|
-| `CLAUDE.md` (this file) | Agents | CURRENT state of the research, conventions, gotchas, this map | Conception/design change |
-| `AGENTS.md` (this file also)| Agents | Hard link to CLAUDE.md | Conception/design change |
+| `AGENTS.md` (this file) | Agents | CURRENT state of the research, conventions, gotchas, this map — **o arquivo real e único** | Conception/design change |
+| `CLAUDE.md` | Agents | Ponteiro de uma linha (`@AGENTS.md`). Não edite — não tem conteúdo próprio | Nunca |
 | `TODO.md` | Both | Append-only task log — 3 seções (Pendente/Prospectivo/Concluído), item novo no topo, cada item com data+hora e agente/humano de criação e conclusão, e link para o plano em `9-vers/plan/` quando complexo | Toda sessão que cria, promove ou conclui uma tarefa |
 | `README.md` | Humans | What the project is, repo map, how to build | Structural repo change |
 | `GUIDANCE.md` / `9-vers/GUIDANCE_MAP.md` | Both | Master sitemap of directory structures and guidance documents | Repository layout or guideline change |

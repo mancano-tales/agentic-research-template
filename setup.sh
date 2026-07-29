@@ -10,8 +10,8 @@
 # Detecção de Git Bash no Windows (MSYS/Cygwin)
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     echo "⚠ [AVISO] Detectado ambiente Git Bash / Windows."
-    echo "  Recomenda-se executar o './setup.ps1' no PowerShell como Administrador"
-    echo "  para garantir a criação correta de junctions NTFS e links físicos."
+    echo "  Recomenda-se executar o './setup.ps1' no PowerShell"
+    echo "  para garantir a criação correta da junction NTFS .agents -> .claude."
     echo "------------------------------------------------------------------------"
 fi
 
@@ -25,16 +25,26 @@ fi
 
 echo "🚀 Configurando links e junctions para agentes de IA..."
 
-# 1. Criar Hard Link para AGENTS.md (OpenAI/Codex)
+# 1. Garantir que CLAUDE.md seja apenas o ponteiro para AGENTS.md
+#    AGENTS.md e o arquivo real e unico de instrucoes. Sem hard link: as copias
+#    espelhadas foram eliminadas em 2026-07-29 porque Claude Code, Copilot e
+#    Cursor leem o padrao aberto AGENTS.md diretamente.
 if [ ! -f AGENTS.md ]; then
-    if [ -f CLAUDE.md ]; then
-        ln CLAUDE.md AGENTS.md 2>/dev/null || cp CLAUDE.md AGENTS.md
-        echo "  - Link AGENTS.md -> CLAUDE.md criado com sucesso."
-    else
-        echo "  - ERRO: CLAUDE.md não encontrado na raiz."
-    fi
+    echo "  - AVISO: AGENTS.md não encontrado na raiz. É o arquivo de instruções principal."
 else
-    echo "  - AGENTS.md já existe."
+    pointer="@AGENTS.md"
+    current=""
+    [ -f CLAUDE.md ] && current=$(tr -d '[:space:]' < CLAUDE.md)
+    if [ "$current" = "$pointer" ]; then
+        echo "  - CLAUDE.md já é o ponteiro."
+    elif [ ${#current} -gt 40 ]; then
+        echo "  - AVISO: CLAUDE.md tem conteúdo próprio e NÃO foi tocado."
+        echo "    Migre-o para AGENTS.md e deixe apenas '@AGENTS.md'."
+    else
+        printf '@AGENTS.md
+' > CLAUDE.md
+        echo "  - CLAUDE.md definido como ponteiro '@AGENTS.md'."
+    fi
 fi
 
 # 2. Criar Symlink para a pasta de customizações (.agents -> .claude)
@@ -51,16 +61,6 @@ else
     echo "  - Diretório/Link .agents já existe."
 fi
 
-# 3. Criar Hard Link para .github/copilot-instructions.md (GitHub Copilot)
-if [ -f CLAUDE.md ]; then
-    mkdir -p .github
-    if [ ! -f .github/copilot-instructions.md ]; then
-        ln CLAUDE.md .github/copilot-instructions.md 2>/dev/null || cp CLAUDE.md .github/copilot-instructions.md
-        echo "  - Link .github/copilot-instructions.md -> CLAUDE.md criado com sucesso."
-    else
-        echo "  - .github/copilot-instructions.md já existe."
-    fi
-fi
 
 # 4. Configurar Git Hooks via core.hooksPath se a pasta .git existir
 if [ -d .git ]; then
@@ -79,10 +79,7 @@ if [ -d .git ]; then
 fi
 
 echo "------------------------------------------------------------------------"
-echo "⚠ [AVISO DE CUIDADO] Editores como VS Code / Obsidian com 'Atomic Save' habilitado,"
-echo "  e clientes de sincronização de nuvem (Dropbox/OneDrive/Google Drive/iCloud),"
-echo "  podem quebrar Hard Links físicos ao salvar arquivos. Caso eles divirjam,"
-echo "  execute este script novamente para restaurar os links."
+echo "💡 AGENTS.md é o único arquivo de instruções. CLAUDE.md é só o ponteiro '@AGENTS.md'."
 echo "------------------------------------------------------------------------"
 echo "💡 Git Hooks úteis de validação automática foram configurados para rodar a partir de 'hooks/'."
 echo "------------------------------------------------------------------------"

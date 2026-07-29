@@ -3,6 +3,33 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-29 15:36 — Fim dos hard links: AGENTS.md vira o arquivo real e único (WP1 + WP2)
+
+Decisão do autor, executada nesta rodada. O repositório mantinha **três cópias do mesmo texto** — `CLAUDE.md`, `AGENTS.md` e `.github/copilot-instructions.md` — amarradas por hard link e por um self-heal de ~130 linhas no validador. Agora:
+
+- **`AGENTS.md` é o arquivo real e único.** Ganhou uma **RULE 0** no topo declarando isso e instruindo explicitamente a não recriar o self-heal.
+- **`CLAUDE.md` contém uma linha**: `@AGENTS.md`, a sintaxe de import do Claude Code.
+- **`.github/copilot-instructions.md` e `.cursor/rules/governance.mdc` foram deletados** (autorização expressa do autor). Copilot e Cursor leem o padrão aberto `AGENTS.md` diretamente.
+
+**Mecanismo diferente do que o plano previa.** O WP1 dizia *symlink* `AGENTS.md → CLAUDE.md`, o que exigia o WP0 (ativar Developer Mode no Windows) e travava tudo atrás de uma ação humana. Arquivo real + ponteiro dispensa link de qualquer espécie: **o WP0 deixou de ser pré-requisito de qualquer coisa** e a solução funciona em qualquer sistema operacional sem privilégio — o que importa num template público com adotante externo.
+
+**O passo que impede a migração de se desfazer sozinha**: `setup.ps1` e `setup.sh` **recriavam** os hard links. Sem corrigi-los, a primeira execução do setup desfaria tudo em silêncio. Agora eles garantem o ponteiro em vez de criar links, e **recusam-se a sobrescrever um `CLAUDE.md` que tenha conteúdo próprio** — avisam para migrar o conteúdo a mão em vez de destruí-lo. Registrado como armadilha no plano, porque vale para cada um dos 11 repositórios que faltam.
+
+**Dois achados durante a execução:**
+
+1. **O self-heal não era só obsoleto — era ativamente nocivo.** Seu ramo de guarda "timestamps muito próximos (<= 2s)" **abortava o validador inteiro** antes de qualquer checagem real rodar (medido ao vivo numa execução contra o `main`). Ou seja: a seção existia para proteger um link que ninguém deveria ter, e no caminho mascarava as travas legítimas. Com ela fora, o validador voltou a executar tudo.
+2. **Um vertical tab (`0x0B`) corrompido no banner de regras críticas**, no lugar do "v" de `validate-governance.R` — por isso o texto lia "alidate-governance.R". Invisível na renderização e já propagado a todos os consumidores pelas cópias. Eliminado.
+
+Também saiu o `make_backup_path()`/`PATH_BACKUP_DIR`, que ficou órfão (só o self-heal os usava). A seção 0c (junction `.agents` → `.claude`) foi **mantida**: trata do diretório de skills, assunto diferente.
+
+**Escopo**: feito **apenas neste repositório**. Os outros 11 seguem com hard links — WP1/WP2 estão `parcial`, não concluídos.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-29 15:36 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "refactor(governance): AGENTS.md vira o arquivo real e único; fim dos hard links (WP1+WP2)"
+- **Arquivos afetados**: `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` (deletado), `.cursor/rules/governance.mdc` (deletado), `tools/validate-governance.R`, `setup.ps1`, `setup.sh`, `README.md`, `9-vers/GUIDANCE_MAP.md`, `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`, `NEWS.md`, `TODO.md`
+
 ## 2026-07-29 08:45 — Reconciliação de duas implementações paralelas do WP3 (merge de `main` na branch)
 
 Duas sessões implementaram o **mesmo Work Package** sem saber uma da outra, a partir do mesmo ponto (`feb55a1`): a branch `agents/rename-agentic-research-to-workflow` (5 commits) e o `main` (6 commits). Este merge unifica as duas.

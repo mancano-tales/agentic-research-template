@@ -10,9 +10,9 @@ agentes:
   auditor: null
 autor_humano: "Tales Mançano"
 tarefas:
-  - { desc: "WP0 — Ativar Developer Mode no Windows (ação humana, pré-requisito)", status: pendente, data: null }
-  - { desc: "WP1 — Substituir hard links por symlink AGENTS.md → CLAUDE.md e remover o self-heal", status: pendente, data: null }
-  - { desc: "WP2 — Remover copilot-instructions.md e .cursor/rules/ dos consumidores", status: pendente, data: null }
+  - { desc: "WP0 — SUPERADO: Developer Mode era pré-requisito do symlink; a solução adotada (AGENTS.md como arquivo real) não usa link nenhum", status: superado, data: "2026-07-29 15:36" }
+  - { desc: "WP1 — Fim dos hard links: AGENTS.md virou o arquivo real e único, CLAUDE.md virou o ponteiro @AGENTS.md, self-heal removido (feito neste repo; falta propagar)", status: parcial, data: "2026-07-29 15:36" }
+  - { desc: "WP2 — Remover copilot-instructions.md e .cursor/rules/ (feito neste repo; falta propagar aos consumidores)", status: parcial, data: "2026-07-29 15:36" }
   - { desc: "WP3 — Indireção real do diretório de governança (scripts R nos 7 repos; falta as skills lerem a chave)", status: parcial, data: "2026-07-28 07:51" }
   - { desc: "WP4 — Resgatar os órfãos da raiz MancanoSync (export resgatado; pastas vazias aguardam autorização)", status: concluido, data: "2026-07-28 07:51" }
   - { desc: "WP5 — Reduzir CLAUDE.md para <200 linhas migrando regras para .claude/rules/", status: pendente, data: null }
@@ -38,7 +38,7 @@ news: []
 
 ---
 
-## ⚡ COMECE AQUI — estado em 2026-07-28 07:51
+## ⚡ COMECE AQUI — estado em 2026-07-29 15:36
 
 **Se você é um agente retomando este trabalho numa sessão nova, leia esta seção inteira antes de tocar em qualquer arquivo.**
 
@@ -46,7 +46,7 @@ news: []
 
 | Repositório | Commits | O que entrou |
 |---|---|---|
-| `agentic-research-template` | `5fa9b59` `1cb784b` `b524dff` `9fc1abc` | WP3, este plano, vira consumidor de skills, sync-skills corrigido, WP11 |
+| `agentic-research-template` | `5fa9b59` `1cb784b` `b524dff` `9fc1abc` `70950d2` + WP1/WP2 | WP3, este plano, vira consumidor de skills, sync-skills corrigido, WP11, **merge de reconciliação com `main`**, **WP1+WP2** |
 | `skills` | `ea6227d` `8a0f246` `11297d3` | vira **mãe das skills**, doc corrigida, auto-identificação |
 | `MancanoSync` (raiz) | `1bd1f33` `2e721dd` | WP3 + **WP4 concluído**, adota a nova mãe |
 | `cha-affirmative-action-us-brazil` | `84ecf66` `e03f2b2` | WP3 (bug latente desarmado), sincronizado |
@@ -54,7 +54,7 @@ news: []
 | `agentic-institutionalism` | `fc3721d` | WP3 |
 | `Mancano2026-MA-Thesis` | `192eb02` | WP3, sincronizado |
 
-**WP3 está CONCLUÍDO** nos 7 repositórios com scripts R. **WP4 está CONCLUÍDO** (export resgatado e versionado). As 11 skills compartilhadas estão **em dia** com a mãe em todos os consumidores.
+**WP1 e WP2 estão feitos NESTE repositório** (2026-07-29) — falta propagar aos outros 11. **WP3 está CONCLUÍDO** nos 7 repositórios com scripts R. **WP4 está CONCLUÍDO** (export resgatado e versionado). As 11 skills compartilhadas estão **em dia** com a mãe em todos os consumidores.
 
 ### Decisão de arquitetura tomada nesta rodada (supera partes deste plano)
 
@@ -73,12 +73,12 @@ O ecossistema tinha **duas mães declaradas** para as mesmas skills. Ficou defin
 
 1. **WP10** — travas de código. Deve vir **antes do WP5**: toda proibição que vira trava física sai do texto do `CLAUDE.md` por consequência, evitando cortar duas vezes.
 2. **WP11** — caminhos absolutos. Depende do WP10 (enquanto `core.hooksPath` puder ficar desconfigurado em silêncio, qualquer limpeza volta a sujar).
-3. **WP1/WP2** — só depois do WP0, que é ação humana.
+3. **WP1/WP2 — propagar aos outros 11 repositórios.** Já feitos aqui; não dependem mais do WP0 (ver abaixo). Em cada consumidor: `AGENTS.md` vira o arquivo real, `CLAUDE.md` vira `@AGENTS.md`, apagar `.github/copilot-instructions.md` e `.cursor/rules/`, remover o self-heal do validador e **corrigir `setup.ps1`/`setup.sh`** — este último é obrigatório, senão rodar o setup recria os hard links e desfaz tudo.
 4. **WP5, WP8, WP9** — em qualquer ordem depois do WP10.
 
 ### 🚧 Bloqueado, aguardando o autor humano
 
-- **WP0 — Developer Mode** (Configurações → Sistema → Para desenvolvedores). Trava o WP1 inteiro.
+- ~~**WP0 — Developer Mode**~~ **NÃO É MAIS NECESSÁRIO** (2026-07-29). Era pré-requisito do *symlink*; o autor optou por `AGENTS.md` como arquivo real e `CLAUDE.md` como ponteiro `@AGENTS.md`, o que dispensa link de qualquer espécie. Nada mais depende de Developer Mode.
 - **Pastas vazias na raiz**: `MancanoSync/9-vers/` e `MancanoSync/0-governance/` ficaram vazias após o WP4 e **não foram removidas** — o `CLAUDE.md` da raiz exige autorização expressa para deletar pasta da raiz.
 - **SpecStory (WP9)**: o autor instalou a extensão em 2026-07-27 e está testando. Ressalva registrada: não cobre Antigravity, que gera parte dos exports.
 
@@ -106,10 +106,11 @@ A questão: o diretório de governança guarda hoje três coisas com naturezas d
 
 1. ~~**O relógio do sistema desta máquina está ~5h45 atrasado.**~~ **RESOLVIDO em 2026-07-29 08:45** — reverificado com o autor: o relógio do sistema está **correto**, use-o normalmente. O deslocamento descrito na § 6b afetou apenas a rodada de 2026-07-27/28 e não persiste. Não propague este aviso.
 2. **Worktrees quebram a detecção da mãe.** De dentro de `repo.worktrees/branch/`, a pasta irmã resolve errado — use `--source` explícito.
-3. **`.ps1` sem BOM quebra no PowerShell 5.1.** Ele lê como ANSI; qualquer caractere não-ASCII adicionado vira erro de parser. O `sync-skills.ps1` já tem BOM; mantenha.
-4. **Vários repositórios têm `AGENTS.md` e `.github/copilot-instructions.md` sujos no working tree**, de sessões anteriores. **Não commite isso** — não é seu. Stage apenas o que você tocou.
-5. **A dissertação tinha um commit de outro agente pela metade** (Antigravity) quando esta sessão começou. Sempre rode `git diff --cached` antes de commitar lá.
-6. **O relatório do `sync-skills` leva ~30s** por causa da normalização de conteúdo. É esperado, não é travamento.
+3. **Ao migrar um consumidor, corrija `setup.ps1`/`setup.sh` na mesma rodada.** Eles recriam os hard links; se ficarem para trás, a primeira execução do setup desfaz a migração inteira em silêncio.
+4. **`.ps1` sem BOM quebra no PowerShell 5.1.** Ele lê como ANSI; qualquer caractere não-ASCII adicionado vira erro de parser. O `sync-skills.ps1` já tem BOM; mantenha.
+5. **Vários repositórios têm `AGENTS.md` e `.github/copilot-instructions.md` sujos no working tree**, de sessões anteriores. **Não commite isso** — não é seu. Stage apenas o que você tocou.
+6. **A dissertação tinha um commit de outro agente pela metade** (Antigravity) quando esta sessão começou. Sempre rode `git diff --cached` antes de commitar lá.
+7. **O relatório do `sync-skills` leva ~30s** por causa da normalização de conteúdo. É esperado, não é travamento.
 
 ---
 
@@ -219,16 +220,25 @@ A direção desejada é obtida por **symlink `AGENTS.md → CLAUDE.md`** (WP1), 
 *   **[HUMANO]** Ativar Developer Mode: Configurações → Sistema → Para desenvolvedores → "Modo de desenvolvedor" = Ativado.
 
 ### WP1 — Fim dos hard links
-*   **[MODIFY]** `setup.ps1` / `setup.sh` — trocar `mklink /h` por symlink; remover a criação do link de `.github/copilot-instructions.md`
+
+> **EXECUTADO neste repositório em 2026-07-29 15:36, com mecanismo diferente do previsto.** O plano dizia *symlink* `AGENTS.md → CLAUDE.md`, o que exigia o WP0 (Developer Mode). O autor decidiu algo mais simples e mais portátil: **`AGENTS.md` passa a ser o arquivo real e único**, e `CLAUDE.md` passa a conter apenas `@AGENTS.md` (sintaxe de import do Claude Code). Não há link de espécie alguma — logo o WP0 deixa de ser pré-requisito de qualquer coisa, e a solução funciona em qualquer sistema operacional sem privilégio, o que importa num template público (§ 0.5).
+
+*   **[MODIFY]** `setup.ps1` / `setup.sh` — ~~trocar `mklink /h` por symlink~~ **removida a criação de hard link**; passam a garantir o ponteiro `CLAUDE.md` e recusam-se a sobrescrevê-lo se ele tiver conteúdo próprio. Este passo era o que impedia a migração de se desfazer sozinha: os scripts recriavam os links, então rodar o setup depois desfaria tudo
 *   **[MODIFY]** `tools/validate-governance.R` — **remover a seção 0 inteira** (self-heal, `mklink`, `make_backup_path()`, `PATH_BACKUP_DIR`)
-*   **[MODIFY]** `CLAUDE.md` — remover a `HARD LINK RULE` do bloco de regras críticas
-*   **[DELETE]** `9-vers/backups/` (e `MancanoSync/0-governance/backups/` em WP4)
+*   **[MODIFY]** `AGENTS.md` — `HARD LINK RULE` substituída por **RULE 0 — THIS IS THE ONLY FILE**, que também instrui explicitamente a não recriar o self-heal
+*   **[DELETE]** `9-vers/backups/` (e `MancanoSync/0-governance/backups/` em WP4) — *pendente: o helper `make_backup_path()` já saiu do código; a pasta em si não foi removida*
+
+**Achado ao executar:** o self-heal não era apenas obsoleto, era **ativamente nocivo**. Seu ramo de guarda "timestamps muito próximos (<= 2s)" abortava o validador inteiro antes de qualquer checagem real rodar — medido ao vivo numa execução contra o `main`. Removê-lo fez o validador voltar a executar todas as travas. Um segundo achado: o banner de regras críticas continha um **vertical tab (`0x0B`)** corrompido no lugar do "v" de `validate-governance.R`, invisível na renderização e propagado a todos os consumidores; eliminado junto.
 
 ### WP2 — Remoção dos arquivos redundantes de instrução
+
+> **EXECUTADO neste repositório em 2026-07-29 15:36**, com autorização expressa do autor. Falta propagar aos demais.
+
 *   **[DELETE]** `.github/copilot-instructions.md` (6 repositórios)
 *   **[DELETE]** `.cursor/rules/governance.mdc` (4 repositórios)
-*   **[MODIFY]** `README.md` — atualizar o organograma
-*   **[MODIFY]** `CLAUDE.md` — remover as menções aos dois arquivos
+*   **[MODIFY]** `README.md` — atualizar o organograma **e a promessa do setup** (dizia que ele cria o hard link)
+*   **[MODIFY]** `AGENTS.md` — remover as menções aos dois arquivos
+*   **[MODIFY]** `9-vers/GUIDANCE_MAP.md` — a linha da raiz apontava para `CLAUDE.md` / `AGENTS.md`; agora aponta só para `AGENTS.md`
 
 ### WP3 — Indireção real
 

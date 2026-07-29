@@ -21,7 +21,9 @@ Para iniciar o projeto e preparar as pontes de contexto das IAs:
     ./setup.sh
     ```
 
-Isso criará automaticamente o hard link para `AGENTS.md` (OpenAI/Codex) e o link de junção para a pasta `.agents/` (Gemini/Antigravity), integrando ambos os ecossistemas sob a mesma base física de habilidades em `.claude/skills/`.
+Isso criará o link de junção para a pasta `.agents/` (Gemini/Antigravity), integrando os ecossistemas sob a mesma base física de habilidades em `.claude/skills/`, e garantirá que `CLAUDE.md` seja apenas o ponteiro `@AGENTS.md`.
+
+> **`AGENTS.md` é o único arquivo de instruções**, e é o arquivo real. Claude Code, GitHub Copilot e Cursor leem o padrão aberto `AGENTS.md` diretamente, então não há mais hard links nem cópias espelhadas para manter em sincronia: `CLAUDE.md` contém uma linha (`@AGENTS.md`), e `.github/copilot-instructions.md` e `.cursor/rules/` deixaram de existir em 2026-07-29. Editar qualquer coisa que não seja `AGENTS.md` é erro.
 
 ---
 
@@ -46,8 +48,8 @@ Isso criará automaticamente o hard link para `AGENTS.md` (OpenAI/Codex) e o lin
 │   └── llm-reviews/
 │       └── README.md                # Registro de conversas e auditoria de IAs
 │
-├── CLAUDE.md                        # Contexto detalhado do projeto, regras estritas e tech stack (IA)
-├── AGENTS.md                        # Hard link físico para CLAUDE.md (OpenAI/Codex)
+├── AGENTS.md                        # ARQUIVO REAL E ÚNICO: contexto do projeto, regras, tech stack
+├── CLAUDE.md                        # Ponteiro de uma linha (@AGENTS.md) — não edite
 ├── GUIDANCE.md                      # Atalho para o sitemap completo de diretrizes
 ├── NEWS.md                          # Changelog de decisões de design e evolução (atualizado por commits)
 └── README.md                        # Este documento (Visão geral de instalação e execução)

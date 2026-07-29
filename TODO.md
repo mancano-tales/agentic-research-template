@@ -6,15 +6,28 @@
 
 ## Pendente
 
+- [ ] Propagar WP1/WP2 (fim dos hard links) aos outros 11 repositórios
+  - Criado: 2026-07-29 15:36 por Claude Opus 5 (a pedido de Tales Mançano)
+  - Feito **só neste repositório** em 2026-07-29: `AGENTS.md` virou o arquivo real e único, `CLAUDE.md` virou `@AGENTS.md`, `.github/copilot-instructions.md` e `.cursor/rules/` deletados, self-heal removido do validador
+  - **Obrigatório em cada repo**: corrigir também `setup.ps1`/`setup.sh`. Eles recriam os hard links — se ficarem para trás, a primeira execução do setup desfaz a migração em silêncio
+  - Não depende mais do WP0/Developer Mode: a solução adotada não usa link de espécie alguma
+  - Plano: `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md` § WP1, WP2
+
+- [ ] Exportar o log da sessão web que executou `2026-07-28_Plano_Config_Diretorio_Governanca.md`
+  - Criado: 2026-07-29 15:36 por Claude Opus 5 (a pedido de Tales Mançano)
+  - O plano está `CONCLUÍDO` sem log de conversa correspondente — o `validate-governance.R` acusa isso a cada execução, e é o único achado aberto dele hoje
+  - **O transcript não está nesta máquina**: a sessão rodou no Claude Code web (Sonnet 4.6, commits `8009fdd`/`d0ae954`) e não deixou `.jsonl` em `~/.claude/projects/`. O autor mantinha a sessão aberta e vai pedir a ela que rode o exportador do próprio ambiente
+  - Ao chegar o arquivo: registrar a linha correspondente em `9-vers/llm-reviews/README.md` § Inventário, no mesmo commit
+
 - [ ] Promover à mãe (`skills`) a convenção `{gov}` das 4 skills de governança
   - Criado: 2026-07-29 08:45 por Claude Opus 5 (a pedido de Tales Mançano)
   - Motivo: o merge de 2026-07-29 trouxe do `main` a substituição de `9-vers/` por `{gov}` em `close-task`, `export-conversation`, `git-cleanup` e `request-audit`. São boas mudanças, mas foram feitas **localmente** — e desde 2026-07-28 este template é *consumidor* de skills, não a mãe. Sem promoção, o próximo `sync-skills --apply` sobrescreve as quatro e a melhoria se perde
   - Efeito colateral enquanto aberto: as 4 skills divergem da mãe, então o relatório do `sync-skills` vai acusá-las como desatualizadas — não é erro, é esta pendência
 
-- [ ] Executar os WPs restantes do plano de migração AGENTS.md / indireção de governança (WP0–WP2, WP4–WP10) nos 12 repositórios
+- [ ] Executar os WPs restantes do plano de migração AGENTS.md / indireção de governança (WP5, WP7–WP11) nos 12 repositórios
   - Criado: 2026-07-27 21:49 por Claude Opus 5 (a pedido de Tales Mançano)
   - Plano: `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`
-  - Bloqueio imediato: **WP0 é ação humana** — ativar Developer Mode no Windows (Configurações → Sistema → Para desenvolvedores), pré-requisito do symlink do WP1
+  - ~~Bloqueio imediato: WP0 é ação humana (Developer Mode)~~ **Desbloqueado em 2026-07-29**: WP0 virou SUPERADO e WP1/WP2 foram feitos neste repo sem symlink. A propagação aos demais repos tem item próprio no topo desta seção
   - Prioridade dentro do WP3: `cha-affirmative-action-us-brazil` e `MancanoSync` raiz primeiro (bug real de export fora do git), depois os repositórios `9-vers` (prevenção)
 
 - [ ] Decidir: manter `tools/export_conversa.R` ou adotar SpecStory para a trilha de conversas

@@ -48,17 +48,6 @@ PATH_PLAN_DIR <- file.path(CWD, GOV_DIR, "plan")
 PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
 PATH_REVIEWS_INDEX <- file.path(CWD, GOV_DIR, "llm-reviews", "README.md")
 
-# Backups do self-heal de hard link (seção 0) vão para uma subpasta dedicada,
-# não a raiz do repo — antes de 2026-07-15 eram escritos direto em
-# "AGENTS.md.bak.<timestamp>"/"CLAUDE.md.bak.<timestamp>" na raiz, que
-# acumulava (achado em um repositório consumidor: 5 arquivos reais na raiz)
-# e poluía visualmente o diretório principal do repositório. Gitignorado por
-# *.bak.* já existente.
-PATH_BACKUP_DIR <- file.path(CWD, GOV_DIR, "backups")
-make_backup_path <- function(basename) {
-  dir.create(PATH_BACKUP_DIR, recursive = TRUE, showWarnings = FALSE)
-  file.path(GOV_DIR, "backups", basename)
-}
 
 # ── Helpers de Impressão ──────────────────────────────────────────────────────
 cat_info <- function(...) cat("ℹ ", paste0(...), "\n")
@@ -66,138 +55,19 @@ cat_success <- function(...) cat("✅ ", paste0(...), "\n")
 cat_warn <- function(...) cat("⚠ ", paste0(...), "\n")
 cat_error <- function(...) cat("❌ ", paste0(...), "\n")
 
-# ── 0. Sincronizar CLAUDE.md e AGENTS.md se divergirem (Self-healing Link) ───
-if (file.exists("CLAUDE.md") && file.exists("AGENTS.md")) {
-  mtime_claude <- file.info("CLAUDE.md")$mtime
-  mtime_agents <- file.info("AGENTS.md")$mtime
-  content_claude <- readLines("CLAUDE.md", warn = FALSE, encoding = "UTF-8")
-  content_agents <- readLines("AGENTS.md", warn = FALSE, encoding = "UTF-8")
-
-  # Nova verificação de segurança contra conflitos de merge nos arquivos de contexto
-  if (any(grepl("^<<<<<<<", content_claude)) || any(grepl("^<<<<<<<", content_agents))) {
-    cat_error("Conflitos de merge detectados em CLAUDE.md ou AGENTS.md. Sincronização automática suspensa.")
-    quit(status = 1)
-  }
-
-  if (!identical(content_claude, content_agents)) {
-    cat_warn("Divergência detectada entre CLAUDE.md e AGENTS.md (possível quebra de link por salvamento atômico).")
-
-    # Calcular diferença absoluta de tempo em segundos
-    diff_time <- abs(difftime(mtime_claude, mtime_agents, units = "secs"))
-
-    if (diff_time <= 2) {
-      cat_error("Timestamps de modificação muito próximos (<= 2s). Sincronização automática suspensa para evitar perda de dados.")
-      cat_error("Por favor, verifique manualmente os arquivos CLAUDE.md e AGENTS.md.")
-      quit(status = 1)
-    } else {
-      if (mtime_claude > mtime_agents) {
-        cat_info("Sincronizando: CLAUDE.md (mais recente) -> AGENTS.md. Recriando Hard Link...")
-        bak_name <- make_backup_path(sprintf("AGENTS.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S")))
-        file.copy("AGENTS.md", bak_name, overwrite = TRUE)
-        cat_warn(paste("Backup criado em:", bak_name))
-
-        file.remove("AGENTS.md")
-        link_success <- FALSE
-        if (.Platform$OS.type == "windows") {
-          # system2("cmd.exe", ...) diretamente, NUNCA shell("cmd /c ...").
-          # Causa raiz encontrada e confirmada empiricamente: quando a
-          # variável de ambiente SHELL aponta para o bash do Git (é o caso
-          # sob o hook de pre-commit, que roda dentro do Git Bash/MSYS2),
-          # shell() não invoca cmd.exe — abre um cmd.exe interativo aninhado
-          # que nunca executa "mklink" de fato (o mklink real nunca roda; o
-          # link nunca é criado). system2() chamando cmd.exe diretamente,
-          # com os argumentos como vetor, contorna esse problema por
-          # completo — testado e confirmado neste exato ambiente.
-          mklink_out <- suppressWarnings(tryCatch(
-            system2("cmd.exe", c("/c", "mklink", "/h", "AGENTS.md", "CLAUDE.md"), stdout = TRUE, stderr = TRUE),
-            error = function(e) character(0)
-          ))
-          mklink_status <- attr(mklink_out, "status")
-          link_success <- (is.null(mklink_status) || mklink_status == 0) && file.exists("AGENTS.md")
-        } else {
-          link_success <- tryCatch(
-            {
-              system("ln CLAUDE.md AGENTS.md", intern = TRUE)
-              TRUE
-            },
-            error = function(e) FALSE
-          )
-        }
-        if (!link_success || !file.exists("AGENTS.md")) {
-          cat_warn("Falha ao criar link físico (permissão ou volumes distintos). Fazendo fallback para cópia física...")
-          file.copy("CLAUDE.md", "AGENTS.md", overwrite = TRUE)
-        }
-      } else {
-        cat_info("Sincronizando: AGENTS.md (mais recente) -> CLAUDE.md. Recriando Hard Link...")
-        bak_name <- make_backup_path(sprintf("CLAUDE.md.bak.%s", format(Sys.time(), "%Y%m%d-%H%M%S")))
-        file.copy("CLAUDE.md", bak_name, overwrite = TRUE)
-        cat_warn(paste("Backup criado em:", bak_name))
-
-        file.remove("CLAUDE.md")
-        link_success <- FALSE
-        if (.Platform$OS.type == "windows") {
-          # Ver comentário no ramo espelhado acima (CLAUDE.md -> AGENTS.md)
-          # sobre por que system2("cmd.exe", ...) substitui shell("cmd /c ...").
-          mklink_out <- suppressWarnings(tryCatch(
-            system2("cmd.exe", c("/c", "mklink", "/h", "CLAUDE.md", "AGENTS.md"), stdout = TRUE, stderr = TRUE),
-            error = function(e) character(0)
-          ))
-          mklink_status <- attr(mklink_out, "status")
-          link_success <- (is.null(mklink_status) || mklink_status == 0) && file.exists("CLAUDE.md")
-        } else {
-          link_success <- tryCatch(
-            {
-              system("ln AGENTS.md CLAUDE.md", intern = TRUE)
-              TRUE
-            },
-            error = function(e) FALSE
-          )
-        }
-        if (!link_success || !file.exists("CLAUDE.md")) {
-          cat_warn("Falha ao criar link físico (permissão ou volumes distintos). Fazendo fallback para cópia física...")
-          file.copy("AGENTS.md", "CLAUDE.md", overwrite = TRUE)
-        }
-      }
-    }
-  }
-}
-
-# ── 0b. Sincronizar .github/copilot-instructions.md a partir de CLAUDE.md ────
-# Terceiro hard link criado por setup.ps1/setup.sh, mas que a auto-cura da
-# seção 0 nunca cobriu (achado da auditoria de 2026-07-12) — CLAUDE.md podia
-# divergir dele indefinidamente sem nenhum alerta do pre-commit. Direção
-# única (CLAUDE.md -> copilot-instructions.md, não bidirecional como o par
-# CLAUDE.md/AGENTS.md) porque copilot-instructions.md não tem conteúdo
-# próprio — é sempre cópia/link de CLAUDE.md.
-if (file.exists("CLAUDE.md") && file.exists(".github/copilot-instructions.md")) {
-  content_claude_cp <- readLines("CLAUDE.md", warn = FALSE, encoding = "UTF-8")
-  content_copilot <- readLines(".github/copilot-instructions.md", warn = FALSE, encoding = "UTF-8")
-  if (!identical(content_claude_cp, content_copilot)) {
-    cat_warn("Divergência detectada entre CLAUDE.md e .github/copilot-instructions.md (hard link provavelmente quebrado). Ressincronizando...")
-    file.remove(".github/copilot-instructions.md")
-    copilot_link_success <- FALSE
-    if (.Platform$OS.type == "windows") {
-      copilot_out <- suppressWarnings(tryCatch(
-        system2("cmd.exe", c("/c", "mklink", "/h", ".github\\copilot-instructions.md", "CLAUDE.md"), stdout = TRUE, stderr = TRUE),
-        error = function(e) character(0)
-      ))
-      copilot_status <- attr(copilot_out, "status")
-      copilot_link_success <- (is.null(copilot_status) || copilot_status == 0) && file.exists(".github/copilot-instructions.md")
-    } else {
-      copilot_link_success <- tryCatch(
-        {
-          system("ln CLAUDE.md .github/copilot-instructions.md", intern = TRUE)
-          TRUE
-        },
-        error = function(e) FALSE
-      )
-    }
-    if (!copilot_link_success || !file.exists(".github/copilot-instructions.md")) {
-      cat_warn("Falha ao recriar hard link de copilot-instructions.md. Fazendo fallback para cópia física...")
-      file.copy("CLAUDE.md", ".github/copilot-instructions.md", overwrite = TRUE)
-    }
-  }
-}
+# ── 0. (removido) Self-heal de hard link CLAUDE.md/AGENTS.md ────────────────
+# Removido em 2026-07-29 (WP1/WP2). AGENTS.md passou a ser o unico arquivo de
+# instrucoes e o arquivo real; CLAUDE.md contem apenas '@AGENTS.md' e
+# .github/copilot-instructions.md deixou de existir. Sem hard link, nao ha o
+# que sincronizar.
+#
+# Nao recrie esta secao. Alem de obsoleta, ela era ativamente nociva: o ramo
+# de guarda 'timestamps muito proximos (<= 2s)' abortava o validador inteiro
+# antes de qualquer checagem real rodar, o que mascarava os achados legitimos
+# das secoes seguintes.
+#
+# Nada foi posto no lugar: sem hard link, CLAUDE.md e um ponteiro estatico
+# de uma linha, e nao ha estado para reconciliar a cada commit.
 
 # ── 0c. Verificar validade da junction .agents -> .claude (informativo) ──────
 # .agents é gitignorado (conveniência de ambiente local, não conteúdo

@@ -2,8 +2,9 @@
 .SYNOPSIS
     setup.ps1 — Configuração de Links de Governança Humano-IA (Windows)
 .DESCRIPTION
-    Executa a criação física da junção de diretório .agents apontando para .claude,
-    e do hard link de AGENTS.md apontando para CLAUDE.md.
+    Executa a criação física da junção de diretório .agents apontando para .claude
+    e garante que CLAUDE.md seja o ponteiro '@AGENTS.md'.
+    NÃO cria hard links: AGENTS.md é o arquivo real e único (WP1/WP2, 2026-07-29).
 .EXAMPLE
     .\setup.ps1
 #>
@@ -15,7 +16,7 @@ if ($drive -match '^[A-Za-z]:$') {
         $fs = (Get-Volume -DriveLetter $drive.Replace(":", "")).FileSystem
         if ($fs -ne "NTFS") {
             Write-Warning "⚠ [AVISO] O sistema de arquivos detectado em $drive é '$fs' (Não NTFS)."
-            Write-Warning "  Junctions e Hard Links requerem sistema NTFS para funcionar corretamente."
+            Write-Warning "  Junctions requerem sistema NTFS para funcionar corretamente."
             Write-Warning "  Pode ocorrer falha ao tentar criar os links abaixo."
             Write-Host "------------------------------------------------------------------------"
         }
@@ -35,17 +36,25 @@ if (-not $hasR) {
 
 Write-Host "🚀 Configurando links e junctions para agentes de IA..." -ForegroundColor Cyan
 
-# 1. Criar Hard Link para AGENTS.md (OpenAI/Codex)
+# 1. Garantir que CLAUDE.md seja apenas o ponteiro para AGENTS.md
+#    AGENTS.md e o arquivo real e unico de instrucoes. Sem hard link: as tres
+#    copias espelhadas (AGENTS.md, copilot-instructions.md) foram eliminadas em
+#    2026-07-29 porque Claude Code, Copilot e Cursor leem AGENTS.md diretamente.
 if (-not (Test-Path -Path "AGENTS.md" -PathType Leaf)) {
-    if (Test-Path -Path "CLAUDE.md" -PathType Leaf) {
-        # Criar hard link via cmd para ampla compatibilidade no Windows
-        cmd /c mklink /h AGENTS.md CLAUDE.md
-        Write-Host "  - Hard link AGENTS.md -> CLAUDE.md criado." -ForegroundColor Green
-    } else {
-        Write-Warning "  - CLAUDE.md não encontrado na raiz."
-    }
+    Write-Warning "  - AGENTS.md não encontrado na raiz. Este é o arquivo de instruções principal."
 } else {
-    Write-Host "  - AGENTS.md já existe." -ForegroundColor Yellow
+    $pointer = "@AGENTS.md"
+    $current = if (Test-Path -Path "CLAUDE.md" -PathType Leaf) { (Get-Content "CLAUDE.md" -Raw).Trim() } else { $null }
+    if ($current -ne $pointer) {
+        if ($null -ne $current -and $current.Length -gt 40) {
+            Write-Warning "  - CLAUDE.md tem conteúdo próprio e NÃO foi tocado. Migre-o para AGENTS.md e deixe apenas @AGENTS.md."
+        } else {
+            Set-Content -Path "CLAUDE.md" -Value $pointer -Encoding utf8 -NoNewline
+            Write-Host "  - CLAUDE.md definido como ponteiro @AGENTS.md." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "  - CLAUDE.md já é o ponteiro." -ForegroundColor Yellow
+    }
 }
 
 # 2. Criar NTFS Directory Junction (.agents -> .claude)
@@ -60,18 +69,6 @@ if (-not (Test-Path -Path ".agents")) {
     Write-Host "  - Diretório/Link .agents já existe." -ForegroundColor Yellow
 }
 
-# 3. Criar Hard Link para .github/copilot-instructions.md (GitHub Copilot)
-if (Test-Path -Path "CLAUDE.md" -PathType Leaf) {
-    if (-not (Test-Path -Path ".github" -PathType Container)) {
-        New-Item -ItemType Directory -Path ".github" -Force | Out-Null
-    }
-    if (-not (Test-Path -Path ".github/copilot-instructions.md" -PathType Leaf)) {
-        cmd /c mklink /h .github\copilot-instructions.md CLAUDE.md
-        Write-Host "  - Hard link .github/copilot-instructions.md -> CLAUDE.md criado." -ForegroundColor Green
-    } else {
-        Write-Host "  - .github/copilot-instructions.md já existe." -ForegroundColor Yellow
-    }
-}
 
 # 4. Configurar Git Hooks via core.hooksPath se a pasta .git existir
 if (Test-Path -Path ".git" -PathType Container) {
@@ -90,10 +87,7 @@ if (Test-Path -Path ".git" -PathType Container) {
 }
 
 Write-Host "------------------------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "⚠ [AVISO DE CUIDADO] Editores como VS Code / Obsidian com 'Atomic Save' habilitado," -ForegroundColor Yellow
-Write-Host "  e clientes de sincronização de nuvem (Dropbox/OneDrive/Google Drive/iCloud)," -ForegroundColor Yellow
-Write-Host "  podem deletar e recriar arquivos ao salvar, o que quebra o Hard Link físico." -ForegroundColor Yellow
-Write-Host "  Se AGENTS.md e CLAUDE.md divergirem em tamanho, re-execute este script." -ForegroundColor Yellow
+Write-Host "💡 AGENTS.md é o único arquivo de instruções. CLAUDE.md é só o ponteiro @AGENTS.md." -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host "💡 Git Hooks úteis de validação automática foram configurados para rodar a partir de 'hooks/'." -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------------------" -ForegroundColor DarkGray
