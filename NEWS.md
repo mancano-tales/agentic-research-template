@@ -20,6 +20,10 @@ Decisão do autor, executada nesta rodada. O repositório mantinha **três cópi
 1. **O self-heal não era só obsoleto — era ativamente nocivo.** Seu ramo de guarda "timestamps muito próximos (<= 2s)" **abortava o validador inteiro** antes de qualquer checagem real rodar (medido ao vivo numa execução contra o `main`). Ou seja: a seção existia para proteger um link que ninguém deveria ter, e no caminho mascarava as travas legítimas. Com ela fora, o validador voltou a executar tudo.
 2. **Um vertical tab (`0x0B`) corrompido no banner de regras críticas**, no lugar do "v" de `validate-governance.R` — por isso o texto lia "alidate-governance.R". Invisível na renderização e já propagado a todos os consumidores pelas cópias. Eliminado.
 
+**Terceiro achado, medido:** `setup.ps1` **nunca teve BOM**, e o PowerShell 5.1 o lia como ANSI — as 11 linhas com acento do script saíam corrompidas na tela desde sempre. Confirmado com code points: sem BOM o interpretador lê `195,161,195,169` (os bytes UTF-8 de `áé` interpretados como CP1252); com BOM, lê `225,233`, correto. BOM adicionado. É a armadilha já registrada no plano para o `sync-skills.ps1`, que valia também aqui e ninguém havia notado.
+
+Os quatro caminhos do novo bloco de setup foram testados isoladamente nas duas linguagens (ponteiro já correto / `CLAUDE.md` ausente / `CLAUDE.md` com conteúdo próprio / `AGENTS.md` ausente); o caso crítico — recusar-se a destruir um `CLAUDE.md` com conteúdo — preserva o arquivo com hash idêntico.
+
 Também saiu o `make_backup_path()`/`PATH_BACKUP_DIR`, que ficou órfão (só o self-heal os usava). A seção 0c (junction `.agents` → `.claude`) foi **mantida**: trata do diretório de skills, assunto diferente.
 
 **Escopo**: feito **apenas neste repositório**. Os outros 11 seguem com hard links — WP1/WP2 estão `parcial`, não concluídos.

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     setup.ps1 — Configuração de Links de Governança Humano-IA (Windows)
 .DESCRIPTION
