@@ -27,11 +27,22 @@ CWD <- getwd()
 # já produziu três pastas de governança coexistindo na raiz MancanoSync
 # ("0-meta" em uso, "9-vers" e "0-governance" órfãs, ambas fora do git).
 #
-# Ordem de preferência: o primeiro candidato que existir no disco vence.
+# Corresponde à chave `diretorio_governanca` em AGENTS.md § "Configuração de
+# Skills". Precedência (resolução do merge de 2026-07-28, que unificou duas
+# implementações independentes do WP3):
+#   1. env var GOV_DIR — override explícito
+#      (ex.: GOV_DIR=0-meta Rscript tools/validate-governance.R);
+#   2. detecção em disco — o primeiro candidato que existir vence;
+#   3. fallback para o primeiro candidato.
+# A detecção é o que garante um default correto por omissão: sem ela, um repo
+# "0-meta" que rode o script sem setar a env var opera sobre a pasta errada.
 # Ver 9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md
 GOV_DIR_CANDIDATOS <- c("0-meta", "9-vers")
-GOV_DIR <- Find(function(d) dir.exists(file.path(CWD, d)), GOV_DIR_CANDIDATOS)
-if (is.null(GOV_DIR)) GOV_DIR <- GOV_DIR_CANDIDATOS[[1]]
+GOV_DIR <- Sys.getenv("GOV_DIR", unset = "")
+if (!nzchar(GOV_DIR)) {
+  GOV_DIR <- Find(function(d) dir.exists(file.path(CWD, d)), GOV_DIR_CANDIDATOS)
+  if (is.null(GOV_DIR)) GOV_DIR <- GOV_DIR_CANDIDATOS[[1]]
+}
 
 PATH_PLAN_DIR <- file.path(CWD, GOV_DIR, "plan")
 PATH_PLAN_INDEX <- file.path(PATH_PLAN_DIR, "README.md")
@@ -674,7 +685,7 @@ get_staged_added_lines <- function(filepath) {
     return(character(0))
   }
   # useBytes = TRUE: arquivos grandes com conteúdo exótico (ex.: os próprios
-  # exports de conversa em 9-vers/llm-reviews/, que embutem JSON com
+  # exports de conversa em {GOV_DIR}/llm-reviews/, que embutem JSON com
   # sequências de escape longas) fazem o grepl padrão (baseado em locale)
   # lançar "unable to translate to a wide string" / "input string is
   # invalid" — achado ao vivo commitando este mesmo arquivo. Os padrões
@@ -724,13 +735,15 @@ if (length(staged_files) > 0) {
 # conflito é um problema em qualquer arquivo de texto, inclusive .md.
 #
 # Exceção auto-referencial (mesmo padrão do T1 com "MancanoSync/"): os
-# exports de conversa em 9-vers/llm-reviews/ são transcrição verbatim de
+# exports de conversa em {GOV_DIR}/llm-reviews/ são transcrição verbatim de
 # sessões de agente — qualquer teste feito ali DENTRO da própria sessão
 # (ex.: testar esta mesma regex contra ">>>>>>> outra-branch") fica
 # registrado literalmente no log e dispararia T6 sem ser um conflito de
 # verdade. Achado ao vivo commitando o export desta sessão.
 CONFLICT_MARKER_REGEX <- r"{^(<{7}|>{7}|={7}$)}"
-t6_files <- staged_files[!grepl(paste0("^", GOV_DIR, "/llm-reviews/"), staged_files)]
+# startsWith e não grepl: comparação literal, imune a GOV_DIR com
+# metacaractere de regex (ex.: um nome de pasta com ".").
+t6_files <- staged_files[!startsWith(staged_files, paste0(GOV_DIR, "/llm-reviews/"))]
 
 if (length(t6_files) > 0) {
   cat_info(sprintf(

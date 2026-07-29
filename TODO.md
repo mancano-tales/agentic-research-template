@@ -6,6 +6,11 @@
 
 ## Pendente
 
+- [ ] Promover à mãe (`skills`) a convenção `{gov}` das 4 skills de governança
+  - Criado: 2026-07-29 08:45 por Claude Opus 5 (a pedido de Tales Mançano)
+  - Motivo: o merge de 2026-07-29 trouxe do `main` a substituição de `9-vers/` por `{gov}` em `close-task`, `export-conversation`, `git-cleanup` e `request-audit`. São boas mudanças, mas foram feitas **localmente** — e desde 2026-07-28 este template é *consumidor* de skills, não a mãe. Sem promoção, o próximo `sync-skills --apply` sobrescreve as quatro e a melhoria se perde
+  - Efeito colateral enquanto aberto: as 4 skills divergem da mãe, então o relatório do `sync-skills` vai acusá-las como desatualizadas — não é erro, é esta pendência
+
 - [ ] Executar os WPs restantes do plano de migração AGENTS.md / indireção de governança (WP0–WP2, WP4–WP10) nos 12 repositórios
   - Criado: 2026-07-27 21:49 por Claude Opus 5 (a pedido de Tales Mançano)
   - Plano: `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`
@@ -30,6 +35,15 @@
   - Plano: `9-vers/plan/...` (se houver)
 
 ## Concluído
+
+- [x] Promover a chave de configuração `diretorio_governanca` — tornar as 4 skills de governança e as ferramentas R config-driven, eliminando o hardcode de `9-vers/`
+  - Criado: 2026-07-28 01:54 por Claude Opus 4.8 (a pedido de Tales Mançano)
+  - Concluído: 2026-07-28 por Claude Sonnet 4.6 (Claude Code, web) (a pedido de Tales Mançano)
+  - Plano: `9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md`
+
+- [x] Higiene pós-reversão/renomeação: corrigir caminhos absolutos obsoletos que apontavam para o nome antigo do repositório (`mancano-project-template`) em `GUIDANCE.md` e `.cursor/rules/governance.mdc`, e remover o diretório órfão `0-governance/` (só continha backups gitignorados) deixado pela padronização revertida
+  - Criado: 2026-07-28 01:54 por Claude Opus 4.8 (a pedido de Tales Mançano)
+  - Concluído: 2026-07-28 01:54 por Claude Opus 4.8 (a pedido de Tales Mançano)
 
 - [x] Mover os backups do self-heal de hard link (`AGENTS.md.bak.*`/`CLAUDE.md.bak.*`) da raiz do repositório para `9-vers/backups/`, e apontar `tools/validate-governance.R` para escrever ali dali em diante — achado promovido de um repositório consumidor (`Nahoum-Mancano-2026-Antitrust`)
   - Criado: 2026-07-15 12:05 por Claude Sonnet 5 (a pedido de Tales Mançano)

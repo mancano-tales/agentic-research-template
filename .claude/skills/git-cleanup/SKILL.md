@@ -5,7 +5,9 @@ description: Limpa pendências acumuladas de `git status` num repositório multi
 
 # Limpar pendências de `git status`
 
-Esta skill é **idêntica em todo repositório que a usa**. Toda particularidade de projeto (qual pasta é de autoria humana protegida, qual arquivo é gerenciado por ferramenta externa, quais pastas têm séries de trabalho contínuo) vem de `CLAUDE.md` § "Configuração de Skills" — nunca hardcoded aqui.
+Esta skill é **idêntica em todo repositório que a usa**. Toda particularidade de projeto (qual pasta é de autoria humana protegida, qual arquivo é gerenciado por ferramenta externa, quais pastas têm séries de trabalho contínuo, qual é o diretório de governança) vem de `CLAUDE.md` § "Configuração de Skills" — nunca hardcoded aqui.
+
+> **Convenção de caminho**: neste documento, `{gov}` representa o valor da chave `diretorio_governanca` em `CLAUDE.md` § "Configuração de Skills".
 
 Procedimento para organizar e comitar o backlog de `git status` num repositório onde múltiplos agentes de IA trabalham em paralelo, então "comitar tudo de uma vez" está fora de cogitação. O `CLAUDE.md` de qualquer repositório que use esta skill proíbe explicitamente `git add .`/`-A` (**Strict Staging Policy**).
 
@@ -31,7 +33,7 @@ Agrupe os itens do inventário por assunto lógico, não por "tudo junto". Padr�
 1. Uma série de scripts/arquivos dentro de uma pasta listada em `diretorios_trabalho_continuo` (`CLAUDE.md` § "Configuração de Skills") que forma um trabalho contínuo (mesmo prefixo, mesma pasta de análise).
 2. Ferramentas novas em `tools/` — sempre precisam de entrada em `NEWS.md` (Regra 2 do `CLAUDE.md`: qualquer mudança relevante em código exige log; por analogia e pela "Synchronized Commit Policy", `tools/` recebe o mesmo tratamento das pastas de trabalho contínuo).
 3. Scripts arquivados (ex.: uma pasta `old-scripts/`) — podem entrar sozinhos ou junto do item 2, com nota do porquê.
-4. Exports de conversa em `9-vers/llm-reviews/*.md` — **sempre exigem uma linha na tabela `## Inventário` de `9-vers/llm-reviews/README.md` antes de comitar**, no mesmo commit.
+4. Exports de conversa em `{gov}/llm-reviews/*.md` — **sempre exigem uma linha na tabela `## Inventário` de `{gov}/llm-reviews/README.md` antes de comitar**, no mesmo commit.
 5. O arquivo da chave `arquivo_gerenciado_externamente`, se preenchida — **sempre commit próprio, nunca misturado com mais nada** (ver passo 5).
 6. Arquivos dentro de `diretorio_autoria_primaria` — só se a variante "com autoria primária" foi escolhida e cada arquivo foi autorizado individualmente.
 7. Qualquer coisa que não se encaixe nos padrões acima — pergunte ao autor como agrupar, não decida sozinho.
@@ -53,7 +55,7 @@ Para cada grupo confirmado no passo 2, **nesta ordem**:
 
 1. `git status --short` de novo — não presuma que o índice está vazio; outro agente pode ter deixado algo staged que não é seu.
 2. Se o grupo exige `NEWS.md` (regra 2 do `CLAUDE.md`): escreva/prepend a entrada agora, formato `## YYYY-MM-DD HH:MM (N) — Título` (fuso horário local do repositório — ver convenção no topo do próprio `NEWS.md`), terminando com o bloco **Metadados de Execução** (Data/Hora, Agente, Mensagem do Commit, Arquivos afetados).
-3. Se o grupo inclui export(s) novo(s) de `9-vers/llm-reviews/`: registre cada um na tabela `## Inventário` do `README.md` dessa pasta, no mesmo grupo.
+3. Se o grupo inclui export(s) novo(s) de `{gov}/llm-reviews/`: registre cada um na tabela `## Inventário` do `README.md` dessa pasta, no mesmo grupo.
 4. `git add <caminho1> <caminho2> ...` — caminhos explícitos, um por um. **Nunca `git add .` nem `git add -A`.**
 5. `Rscript tools/validate-governance.R` (sem `--sync`) como checkpoint. Trate os achados:
    - **Caminho absoluto local (T1)** num script que você não escreveu: não reescreva a lógica de outra pessoa sem necessidade. Se o fix óbvio e seguro é trocar por um helper de caminho relativo do projeto preservando o comportamento, aplique e documente por quê. Se não for óbvio, pare e pergunte.

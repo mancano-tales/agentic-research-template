@@ -104,7 +104,7 @@ A questão: o diretório de governança guarda hoje três coisas com naturezas d
 
 ### ⚠️ Armadilhas descobertas na prática — não repita
 
-1. **O relógio do sistema desta máquina está ~5h45 atrasado.** Confirme o horário com o autor antes de carimbar qualquer timestamp. Ver § 6b.
+1. ~~**O relógio do sistema desta máquina está ~5h45 atrasado.**~~ **RESOLVIDO em 2026-07-29 08:45** — reverificado com o autor: o relógio do sistema está **correto**, use-o normalmente. O deslocamento descrito na § 6b afetou apenas a rodada de 2026-07-27/28 e não persiste. Não propague este aviso.
 2. **Worktrees quebram a detecção da mãe.** De dentro de `repo.worktrees/branch/`, a pasta irmã resolve errado — use `--source` explícito.
 3. **`.ps1` sem BOM quebra no PowerShell 5.1.** Ele lê como ANSI; qualquer caractere não-ASCII adicionado vira erro de parser. O `sync-skills.ps1` já tem BOM; mantenha.
 4. **Vários repositórios têm `AGENTS.md` e `.github/copilot-instructions.md` sujos no working tree**, de sessões anteriores. **Não commite isso** — não é seu. Stage apenas o que você tocou.

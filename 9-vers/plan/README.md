@@ -46,7 +46,8 @@ news: []
 <!-- BEGIN_PLAN_INDEX -->
 | Plano | Status | Executor | O que é |
 |---|---|---|---|
-| `2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md` | ATIVO (criado 2026-07-27 21:49) | — | Migração dos 12 repositórios para AGENTS.md via symlink, fim dos hard links, indireção real do diretório de governança e adoção de `.claude/rules/` |
+| `2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md` | ATIVO (criado 2026-07-27 21:49) | — | Migração dos 12 repositórios para AGENTS.md, fim dos hard links, indireção real do diretório de governança e adoção de `.claude/rules/` |
+| `2026-07-28_Plano_Config_Diretorio_Governanca.md` | CONCLUÍDO (2026-07-28) | Claude Sonnet 4.6 (Claude Code, web) | Promover a chave `diretorio_governanca` — skills/ferramentas config-driven, sem hardcode de `9-vers/`. Trabalho paralelo ao WP3 do plano acima; unificado no merge de 2026-07-28 |
 | `2026-07-14_Prompt_Auditoria_Sync-Skills-Superpowers.md` | CONCLUÍDO (2026-07-14 12:45) | Claude Sonnet 5 (Claude Code, VS Code) | Auditoria — Adição de §4 (skills globais superpowers) em sync-skills/SKILL.md |
 | `2026-07-14_Plano_Skills_Compartilhadas_TODO.md` | CONCLUÍDO (2026-07-14 11:45) | Claude Sonnet 5 (Claude Code, VS Code) | Skills compartilhadas entre projetos (repositório mãe) e convenção definitiva de TODO.md |
 | `2026-07-13_Plano_Sincronizar_Governanca_Com_Tese.md` | CONCLUÍDO (2026-07-13 22:37) | Claude Sonnet 5 (Claude Code, VS Code) | Sincronizar mancano-project-template com o estado atual de governança do repositório Mancano2026-MA-Thesis |

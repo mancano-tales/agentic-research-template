@@ -8,7 +8,9 @@
 # (ou prefixo de UUID) de sessão, resolvido contra as pastas de sessões.
 #
 # Saída: <dir-governanca>/llm-reviews/YYYY-MM-DD_HHMM_<slug>_conversa-<fonte>.md
-#        onde <dir-governanca> é detectado em tempo de execução (ver abaixo).
+#        onde <dir-governanca> vem da env var GOV_DIR ou, na ausência dela, é
+#        detectado em tempo de execução (ver abaixo). Corresponde à chave
+#        `diretorio_governanca` em AGENTS.md § "Configuração de Skills".
 # ==============================================================================
 
 suppressPackageStartupMessages(library(jsonlite))
@@ -43,11 +45,21 @@ PASTA_ANTIGRAVITY <- file.path(
 # arquivo ficou fora do controle de versão e sem backup. Esta detecção existe
 # para que isso não se repita.
 #
-# Ordem de preferência: o primeiro candidato que existir no disco vence.
+# Precedência (resolução do merge de 2026-07-28, que unificou duas
+# implementações independentes do WP3):
+#   1. env var GOV_DIR — override explícito, para quem usa um nome fora da lista;
+#   2. detecção em disco — o primeiro candidato que existir vence;
+#   3. fallback para o primeiro candidato.
+# A detecção é o que garante um default correto por omissão: sem ela, um repo
+# "0-meta" que rode o script sem setar a env var volta a escrever na pasta
+# errada — exatamente o modo de falha acima.
 # Ver 9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md
 GOV_DIR_CANDIDATOS <- c("0-meta", "9-vers")
-GOV_DIR <- Find(function(d) dir.exists(file.path(getwd(), d)), GOV_DIR_CANDIDATOS)
-if (is.null(GOV_DIR)) GOV_DIR <- GOV_DIR_CANDIDATOS[[1]]
+GOV_DIR <- Sys.getenv("GOV_DIR", unset = "")
+if (!nzchar(GOV_DIR)) {
+  GOV_DIR <- Find(function(d) dir.exists(file.path(getwd(), d)), GOV_DIR_CANDIDATOS)
+  if (is.null(GOV_DIR)) GOV_DIR <- GOV_DIR_CANDIDATOS[[1]]
+}
 
 PASTA_SAIDA <- file.path(getwd(), GOV_DIR, "llm-reviews")
 FUSO <- "America/Sao_Paulo"

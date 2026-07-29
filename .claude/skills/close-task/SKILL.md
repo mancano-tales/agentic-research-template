@@ -6,14 +6,16 @@ description: Cerimônia completa de encerramento de tarefa. Executa todo o workf
 
 # Cerimônia de Encerramento (Close Task)
 
-Esta skill define o Procedimento Operacional Padrão (SOP) que todo agente deve seguir estritamente quando o usuário solicitar o encerramento ou finalização de uma tarefa. Esta skill é **idêntica em todo repositório que a usa** — qualquer particularidade deste projeto (caminho do script de exportação, pasta de autoria protegida) vem de `CLAUDE.md` § "Configuração de Skills", nunca hardcoded aqui.
+Esta skill define o Procedimento Operacional Padrão (SOP) que todo agente deve seguir estritamente quando o usuário solicitar o encerramento ou finalização de uma tarefa. Esta skill é **idêntica em todo repositório que a usa** — qualquer particularidade deste projeto (caminho do script de exportação, pasta de autoria protegida, diretório de governança) vem de `CLAUDE.md` § "Configuração de Skills", nunca hardcoded aqui.
+
+> **Convenção de caminho**: neste documento, `{gov}` representa o valor da chave `diretorio_governanca` em `CLAUDE.md` § "Configuração de Skills".
 
 **ATENÇÃO CRÍTICA**: Esta skill só deve ser executada **UMA ÚNICA VEZ**, no fim definitivo da conversa/sessão. Nunca a rode a cada mensagem, pois o script de exportação cria múltiplas cópias do histórico se invocado repetidamente.
 
 Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
 
 ## 1. Marcar o Plano como Concluído
-- Localize o plano ativo (em `9-vers/plan/`) que originou a tarefa. Se houver mais de um, pergunte ao usuário qual deve ser finalizado.
+- Localize o plano ativo (em `{gov}/plan/`) que originou a tarefa. Se houver mais de um, pergunte ao usuário qual deve ser finalizado.
 - Use ferramentas de edição (e.g. replace_file_content) para mudar `status: "EM EXECUÇÃO"` (ou `"ATIVO"`) para `status: "CONCLUÍDO"`.
 - Adicione a chave `concluido: "YYYY-MM-DD HH:MM"` (data **e hora**, no seu fuso horário local — ver "Convenção de timestamp" no topo do `NEWS.md`) logo abaixo da chave `criado`, respeitando **exatamente** a indentação já usada por `criado` na mesma linha/nível — não invente indentação nova.
 - Adicione no array `relacionados` o nome ou identificador do log de conversa que será gerado no passo 4.
@@ -34,7 +36,7 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
 - **Lembrete da Governança**: Nunca altere ou reescreva entradas antigas. Apenas adicione conteúdo novo (append) no topo do log de mudanças ou na seção da data de hoje.
 
 ## 3. Atualizar o Inventário de Logs
-- Abra o arquivo `9-vers/llm-reviews/README.md`.
+- Abra o arquivo `{gov}/llm-reviews/README.md`.
 - Adicione uma nova linha ao final (ou topo) da tabela `## Inventário` prevendo o arquivo do log que será exportado.
   - A convenção do nome gerado pelo script será: `YYYY-MM-DD_HHMM_<slug-descritivo-em-kebab-case>_conversa-<fonte>.md`.
   - Tipo: `Conversa`
@@ -49,10 +51,10 @@ Siga OS PASSOS ABAIXO EXATAMENTE NESTA ORDEM:
   ```bash
   Rscript <script_exportar_conversa> <SEU-ID-DE-SESSAO> <um-slug-descritivo-em-kebab-case>
   ```
-- O script vai gerar o arquivo Markdown na pasta `9-vers/llm-reviews/` e imprimir o caminho absoluto no terminal. Verifique se o nome do arquivo gerado coincide com o que você registrou no inventário no Passo 3. Se não, corrija o inventário.
+- O script vai gerar o arquivo Markdown na pasta `{gov}/llm-reviews/` e imprimir o caminho absoluto no terminal. Verifique se o nome do arquivo gerado coincide com o que você registrou no inventário no Passo 3. Se não, corrija o inventário.
 
 ## 5. Validação e Sincronização
-- **NUNCA use `git add .` ou `git add -A`** — proibido pelo `CLAUDE.md` § "Strict Staging Policy". Faça `git status` e stage **explicitamente, arquivo por arquivo**, apenas: (a) o plano editado no passo 1; (b) `NEWS.md` editado no passo 2; (c) `9-vers/llm-reviews/README.md` editado no passo 3; (d) o log de conversa exportado no passo 4; (e) qualquer arquivo de código/script/figura que você mesmo editou como parte desta tarefa (você já sabe quais são — enumere-os, não adivinhe pelo `git status`).
+- **NUNCA use `git add .` ou `git add -A`** — proibido pelo `CLAUDE.md` § "Strict Staging Policy". Faça `git status` e stage **explicitamente, arquivo por arquivo**, apenas: (a) o plano editado no passo 1; (b) `NEWS.md` editado no passo 2; (c) `{gov}/llm-reviews/README.md` editado no passo 3; (d) o log de conversa exportado no passo 4; (e) qualquer arquivo de código/script/figura que você mesmo editou como parte desta tarefa (você já sabe quais são — enumere-os, não adivinhe pelo `git status`).
   ```bash
   git add <caminho1> <caminho2> ...
   ```

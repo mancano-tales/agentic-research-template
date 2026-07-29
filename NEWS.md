@@ -3,6 +3,68 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-29 08:45 — Reconciliação de duas implementações paralelas do WP3 (merge de `main` na branch)
+
+Duas sessões implementaram o **mesmo Work Package** sem saber uma da outra, a partir do mesmo ponto (`feb55a1`): a branch `agents/rename-agentic-research-to-workflow` (5 commits) e o `main` (6 commits). Este merge unifica as duas.
+
+**A colisão real** estava na indireção do diretório de governança nos scripts R — dois mecanismos diferentes para o mesmo fim:
+
+| | `main` (`8009fdd`) | branch (`5fa9b59`) |
+|---|---|---|
+| Mecanismo | `Sys.getenv("GOV_DIR", unset = "9-vers")` | detecção em disco (`0-meta` → `9-vers`) |
+| Default num repo `0-meta/` | **errado** se ninguém setar a env var | correto |
+| Override explícito | sim | não |
+
+**Resolução (decisão do autor): combinar, nesta precedência** — (1) env var `GOV_DIR`; (2) detecção em disco; (3) fallback. Manter só a env var reintroduziria exatamente o modo de falha que motivou o WP4: em 2026-07-26 o `export_conversa.R` escreveu um export em `9-vers/llm-reviews/` dentro de um repositório que usa `0-meta/`, numa pasta gitignorada — o arquivo ficou fora do controle de versão e sem backup. A detecção garante default correto por omissão; a env var cobre nomes fora da lista de candidatos.
+
+Duas resoluções menores no `validate-governance.R`: adotado o `startsWith` do `main` no filtro T6 (comparação literal, imune a `GOV_DIR` com metacaractere de regex) e a formatação da branch em `GOVERNANCE_DOCS` — conteúdo idêntico nos dois lados.
+
+**Preservado do `main`, sem conflito** (trabalho genuinamente complementar): a convenção `{gov}` nas 4 skills de governança (`close-task`, `export-conversation`, `git-cleanup`, `request-audit`), que a branch não havia feito; a correção dos links `file:///` absolutos em `GUIDANCE.md` — que é literalmente o WP11; e as notas de configurabilidade em `9-vers/GUIDANCE_MAP.md` e `.cursor/rules/governance.mdc`.
+
+**NEWS.md**: as 5 entradas dos dois lados foram preservadas e reordenadas cronologicamente — nenhuma reescrita.
+
+**Pendência registrada.** As edições do `main` nas 4 skills foram feitas localmente, mas a decisão de 2026-07-28 tornou este template **consumidor** de skills (a mãe é o repo `skills`). Essas melhorias serão sobrescritas no próximo `sync-skills --apply` se não forem promovidas à mãe primeiro. Item adicionado ao `TODO.md`.
+
+**Correção de fato**: a armadilha nº 1 da seção COMECE AQUI do plano de migração ("o relógio desta máquina está ~5h45 atrasado") foi **verificada com o autor e é falsa** — o relógio está correto. O aviso foi removido do plano para não induzir sessões futuras a erro.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-29 08:45 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "merge(governance): unifica as duas implementações paralelas do WP3 (GOV_DIR env var + detecção)"
+- **Arquivos afetados**: `tools/validate-governance.R`, `tools/export_conversa.R`, `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `NEWS.md`, `TODO.md`, `9-vers/plan/README.md`, `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`
+
+## 2026-07-28 — Parametrização config-driven do diretório de governança (execução do plano)
+
+Execução do plano `2026-07-28_Plano_Config_Diretorio_Governanca.md` (aprovado pelo autor). As 4 tarefas foram concluídas:
+
+1. **`CLAUDE.md` § Configuração de Skills** — adicionada a chave `diretorio_governanca` (`9-vers` como default da mãe; consumidores sobrescrevem com `GOV_DIR=<valor>`).
+2. **4 skills de governança** (`close-task`, `export-conversation`, `git-cleanup`, `request-audit`) — todo literal `9-vers/` substituído por `{gov}`, com nota de convenção `{gov} = diretorio_governanca` adicionada no topo de cada skill. Decisão de design: referência pura (sem exemplo `(9-vers/)` embutido) — o valor só vive na tabela do `CLAUDE.md`, garantindo que o hash das skills seja idêntico entre repositórios mãe e consumidores.
+3. **`tools/validate-governance.R`** — extraído `GOV_DIR <- Sys.getenv("GOV_DIR", unset = "9-vers")` no topo; todas as constantes de caminho (`PATH_PLAN_DIR`, `PATH_REVIEWS_INDEX`, `PATH_BACKUP_DIR`), o filtro T6 e a lista `GOVERNANCE_DOCS` derivam de `GOV_DIR`.
+4. **`tools/export_conversa.R`** — idem: `GOV_DIR` extraído antes de `PASTA_SAIDA`.
+5. **`9-vers/GUIDANCE_MAP.md` e `.cursor/rules/governance.mdc`** — nota de configurabilidade adicionada; `9-vers/` mantido como exemplo documentando o default da mãe.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-28 (Horário de Brasília — hora exata não recuperável no ambiente remoto)
+- **Agente**: Claude Sonnet 4.6 / Claude Code (web, remote)
+- **Mensagem do Commit**: "feat(governance): parametrize GOV_DIR — config-driven diretorio_governanca in skills and R tools"
+- **Arquivos afetados**: CLAUDE.md, .claude/skills/close-task/SKILL.md, .claude/skills/export-conversation/SKILL.md, .claude/skills/git-cleanup/SKILL.md, .claude/skills/request-audit/SKILL.md, tools/validate-governance.R, tools/export_conversa.R, 9-vers/GUIDANCE_MAP.md, .cursor/rules/governance.mdc, 9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md, NEWS.md
+
+## 2026-07-28 01:54 — Higiene pós-reversão + plano para tornar as skills config-driven no diretório de governança
+
+Rodada de refinamento e limpeza. Três correções de higiene, todas herança da renomeação do repositório (`mancano-project-template` → `agentic-research-template`) e da padronização de diretório que foi tentada e revertida (`78b5315` → `40bc2d6`):
+
+1. **`GUIDANCE.md`** — os dois únicos documentos de governança ativos que ainda carregavam links `file:///` absolutos locais apontando para o **nome antigo do repositório** (`mancano-project-template`) foram convertidos para links Markdown relativos (`CLAUDE.md`, `9-vers/GUIDANCE_MAP.md`). É exatamente o tipo de vazamento que o T5 do `validate-governance.R` bloqueia — passavam batido só porque o T5 escaneia apenas linhas *adicionadas* e estas eram pré-existentes. Crítico num template feito para ser clonado.
+2. **`.cursor/rules/governance.mdc`** — cabeçalho ainda dizia `(mancano-project-template)`; atualizado para `(agentic-research-template)`.
+3. **Diretório órfão `0-governance/`** — a padronização revertida moveu os backups do self-heal para `0-governance/backups/`; o `git revert` restaurou o código (que volta a apontar para `9-vers/backups/`) mas não os arquivos gitignorados, deixando um `0-governance/` órfão contendo só `.bak.*`. Os 7 backups foram consolidados em `9-vers/backups/` (onde o código aponta) e o diretório órfão removido. Nenhum backup deletado; nada rastreado pelo git foi afetado (era tudo gitignorado).
+
+Além da limpeza, foi **proposto** (não executado) o plano `2026-07-28_Plano_Config_Diretorio_Governanca.md` (status ATIVO, aguardando aprovação): promover a chave `diretorio_governanca` à § Configuração de Skills, tornando as 4 skills de governança (`close-task`, `export-conversation`, `git-cleanup`, `request-audit`) e as ferramentas R config-driven em vez de hardcodarem `9-vers/`. Motivação: o próprio `CLAUDE.md` proíbe hardcode de convenção de projeto nas skills, mas essas 4 violam isso — o que forçou o consumidor `MancanoSync` (que usa `0-meta/`) a manter um remendo textual ("leia `9-vers/` como `0-meta/`"). A refatoração não foi executada de propósito: é mudança arquitetural com efeito de propagação e a padronização física do diretório já foi revertida uma vez, então exige aprovação explícita do autor (§ Task Planning Policy).
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-28 01:54 (Horário Local)
+- **Agente**: Claude Opus 4.8 / Claude Code / VS Code
+- **Mensagem do Commit**: "chore(governance): fix stale absolute paths, drop orphaned 0-governance/, propose config-driven governance-dir plan"
+- **Arquivos afetados**: `GUIDANCE.md`, `.cursor/rules/governance.mdc`, `9-vers/plan/2026-07-28_Plano_Config_Diretorio_Governanca.md`, `9-vers/plan/README.md`, `TODO.md`, `NEWS.md` (e `9-vers/backups/` consolidado, gitignorado)
+
 ## 2026-07-28 01:10 — Primeira sincronização real com a nova mãe; regressão de performance corrigida
 
 Executado `sync-skills --apply all` contra o repositório `skills`, agora a mãe. As 11 skills deste template estão **em dia** com ela pela primeira vez desde que as duas passaram a coexistir.
@@ -64,6 +126,7 @@ Plano de migração completo (11 work packages, 12 repositórios) em `9-vers/pla
 - **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
 - **Mensagem do Commit**: "feat(governance): indireção real do diretório de governança (WP3) e plano de migração AGENTS.md"
 - **Arquivos afetados**: `tools/validate-governance.R`, `tools/export_conversa.R`, `9-vers/plan/2026-07-27_Plano_Migracao_AGENTS-md_e_Indirecao_Governanca.md`, `9-vers/plan/README.md`, `NEWS.md`, `TODO.md`
+
 
 ## 2026-07-17 10:38 — `disable-model-invocation` revertida para `false` em grill-me/grill-with-docs/edit-article
 
