@@ -3,6 +3,24 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-31 09:34 — `PRINCIPLES.md`: os princípios do template, reunidos e com a origem de cada um
+
+A pedido do autor. Até aqui os princípios existiam **dispersos** — parte no `AGENTS.md`, parte implícita nas travas do validador, parte só recuperável lendo entradas antigas deste `NEWS.md`. Quem adotava o template recebia as regras sem a razão delas, e razão ausente é regra que o primeiro atrito descarta.
+
+Oito princípios, cada um ancorado na falha que o originou: **policy-as-code** (prosa não é superfície de controle; falso bloqueio é problema de segurança), **transparência** (passo pulado e declarado é aceitável, pulado em silêncio corrompe a auditoria), **reprodutibilidade** (nenhum caminho absoluto; nada específico de projeto dentro de artefato compartilhado; cópia em vez de link), **changelog intelectual**, **Conventional Commits**, **arquivamento dos logs de LLM**, **plano antes de execução** e **uma peça, um dono**.
+
+**A distinção que o documento fixa** — e que vinha sendo confundida: `NEWS.md` é changelog **intelectual** (decisão e raciocínio, escrito à mão, nunca reescrito); o `CHANGELOG` é **derivado** do `git log` por `render-changelog.R`; o Git é a fonte dos hashes. É a formulação positiva do problema do ponto fixo resolvido em 2026-07-30 22:45: o hash não se escreve no arquivo que o commit versiona, mas isso não obriga a abrir mão de um changelog com hashes — obriga a derivá-lo.
+
+**Escolha de nome de arquivo, a confirmar com o autor**: `PRINCIPLES.md` e não `README.md`, porque o `README.md` deste repositório está redigido como README **do consumidor** (abre em `# [NOME DO SEU PROJETO]`, com placeholders a preencher por quem adota). O mesmo arquivo não consegue ser o README do template e o README que o template entrega. Alternativa, se o autor preferir: promover este documento a `README.md` e renomear o atual para `README.template.md`.
+
+O documento registra também, sem maquiar, uma **questão em aberto**: a `close-task` pode ser tornada agnóstica ao repositório, mas invoca `validate-governance.R` e `export_conversa.R`, que vivem aqui — um agente pode resolver o diretório certo e entregá-lo a ferramentas que o descartam em silêncio. A fronteira entre `skills` e este template, como está desenhada, corta no meio de um problema único.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-31 09:34 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "docs(principles): reune os principios do template e sua origem"
+- **Arquivos afetados**: `PRINCIPLES.md`, `README.md`, `NEWS.md`
+
 ## 2026-07-30 22:45 — Co-commit do NEWS.md, hook commit-msg e o fim do hash escrito à mão (issue #1)
 
 Rodada motivada por uma auditoria adversária das travas do consumidor `cem-usp/edupol`, que revelou tanto lacunas deste template quanto uma regra de governança impossível de cumprir.
