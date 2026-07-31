@@ -1,12 +1,13 @@
 # CHANGELOG (derivado)
 
-Gerado por `tools/render-changelog.R` em 2026-07-31 09:57.
+Derivado do `git log` por `tools/render-changelog.R`. Commit mais recente incluído: 2026-07-31 09:58.
 
 Arquivo DERIVADO do `git log`. Não edite à mão — a fonte editorial é o `NEWS.md`,
 e a fonte dos hashes é o Git. Ver o cabeçalho do script para o porquê.
 
 ## Added
 
+- **`[97a37d8]` 2026-07-31 09:58** — feat(changelog): gera e versiona CHANGELOG.md derivado do git log
 - **`[c1e2106]` 2026-07-30 21:50** — feat(governance): valida conteudo do NEWS.md e adiciona commit-msg
 - **`[8009fdd]` 2026-07-28 14:33** — feat(governance): parametrize GOV_DIR — config-driven diretorio_governanca in skills and R tools
 - **`[5fa9b59]` 2026-07-27 23:30** — feat(governance): indireção real do diretório de governança (WP3) e plano de migração AGENTS.md

@@ -55,7 +55,9 @@ Isso criará o link de junção para a pasta `.agents/` (Gemini/Antigravity), in
 ├── AGENTS.md                        # ARQUIVO REAL E ÚNICO: contexto do projeto, regras, tech stack
 ├── CLAUDE.md                        # Ponteiro de uma linha (@AGENTS.md) — não edite
 ├── GUIDANCE.md                      # Atalho para o sitemap completo de diretrizes
-├── NEWS.md                          # Changelog de decisões de design e evolução (atualizado por commits)
+├── PRINCIPLES.md                    # Os 8 princípios do template e a falha que originou cada um
+├── NEWS.md                          # Changelog EDITORIAL: decisões e raciocínio, escrito à mão, sem hashes
+├── CHANGELOG.md                     # Changelog DERIVADO do git log (hash + timestamp) — não edite à mão
 └── README.md                        # Este documento (Visão geral de instalação e execução)
 ```
 

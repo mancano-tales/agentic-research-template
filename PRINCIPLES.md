@@ -39,7 +39,18 @@ O repositório precisa funcionar em outra máquina, com outro usuário, em outro
 
 ## 4. Keep a Changelog 1.1.0, com rastreabilidade derivada
 
-A convenção adotada é [**Keep a Changelog 1.1.0**](https://keepachangelog.com/): categorias padrão (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`), sem emoji, timestamp ISO-8601 com hora e minuto. As **linhas adicionadas** ao `NEWS.md` são validadas contra o formato pela trava T7 — não apenas a presença do arquivo no stage. Checar presença reduz a regra a ritual: um `NEWS.md` contendo a string `xxxxx` passaria.
+A convenção adotada é [**Keep a Changelog 1.1.0**](https://keepachangelog.com/): categorias padrão, sem emoji, timestamp ISO-8601 com hora e minuto. As **linhas adicionadas** ao `NEWS.md` são validadas contra o formato pela trava T7 — não apenas a presença do arquivo no stage. Checar presença reduz a regra a ritual: um `NEWS.md` contendo a string `xxxxx` passaria.
+
+**As categorias disponíveis diferem entre os dois arquivos, e a diferença não é acidental.** O `NEWS.md` é escrito à mão e pode usar as seis do padrão (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`). O `CHANGELOG.md` é derivado do tipo do Conventional Commit e só emite o que esse tipo determina sem ambiguidade:
+
+| Categoria emitida | De onde vem |
+|---|---|
+| `Breaking` | `!` no cabeçalho do commit |
+| `Added` | `feat` |
+| `Fixed` | `fix`, `perf` |
+| `Changed` | `refactor`, `style`, `docs`, `build`, `ci`, `chore`, `test`, `revert`, e qualquer tipo não reconhecido |
+
+`Deprecated`, `Removed` e `Security` **não são emitidas** porque nenhum tipo de Conventional Commit mapeia para elas sem adivinhação — `revert` não é remoção, e não há tipo para depreciação ou correção de segurança. Inferi-las produziria classificação errada com aparência de precisão. Quando essas categorias importam, o lugar delas é o `NEWS.md`, onde um humano as escolhe deliberadamente.
 
 Ela é implementada em **dois arquivos com papéis distintos**, e confundi-los é o erro mais comum:
 
