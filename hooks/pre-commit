@@ -10,5 +10,10 @@
 unset LC_ALL LC_CTYPE LANG
 
 # Executar validador de consistência antes do commit
-Rscript tools/validate-governance.R
+#
+# `--hook` declara o contexto EXPLICITAMENTE. O validador não deve inferir que está
+# rodando como hook a partir da quantidade de arquivos staged: `git commit
+# --allow-empty` produz lista vazia e faria a inferência concluir o oposto,
+# dispensando as travas de commit justamente num commit.
+Rscript tools/validate-governance.R --hook
 exit $?

@@ -95,6 +95,16 @@ errors_found <- FALSE
 args <- commandArgs(trailingOnly = TRUE)
 should_sync <- "--sync" %in% args
 
+# Contexto de hook declarado EXPLICITAMENTE por hooks/pre-commit (`--hook`), nunca
+# inferido da quantidade de arquivos staged.
+#
+# Inferir pelo staging é o bug que a auditoria de 2026-07-30 encontrou no consumidor
+# `edupol`: `is_git_staged_run <- length(staged_files) > 0` faz `git commit
+# --allow-empty` produzir uma lista vazia, o validador concluir que NÃO está rodando
+# como hook e pular a trava do NEWS.md por inteiro. Um commit vazio passava sem
+# nenhuma checagem de changelog. A flag elimina a inferência.
+is_hook_run <- "--hook" %in% args
+
 # Verificar se os caminhos fundamentais existem
 if (!file.exists(PATH_PLAN_INDEX)) {
   cat_error("Índice de planos não encontrado em: ", PATH_PLAN_INDEX)
@@ -717,6 +727,124 @@ if (length(gov_files) > 0) {
   if (check_abs_path_in_added_lines(gov_files, "T5")) errors_found <- TRUE
 }
 
+# ── T7. Co-commit e Formato do NEWS.md (Keep a Changelog 1.1.0) ───────────────
+# Absorvido do consumidor `edupol` (auditoria de 2026-07-30), que tinha a regra e o
+# template não. Vai ALÉM do original em dois pontos:
+#
+#  1. O original só checava PRESENÇA no index. Auditoria comprovou que um NEWS.md
+#     contendo a string "xxxxx" passava. Aqui o conteúdo das linhas ADICIONADAS é
+#     validado contra o formato Keep a Changelog.
+#  2. Roda fora do guarda `length(staged_files) > 0`, então `--allow-empty` não escapa.
+#
+# Escopo "só linhas adicionadas", como T1/T5: entradas antigas nunca são reescaneadas,
+# o que respeita a regra de nunca reescrever histórico do NEWS.md.
+if (is_hook_run && file.exists(file.path(CWD, "NEWS.md"))) {
+  # Merge commit: a mensagem e o conteúdo são gerados pelo Git. Exigir changelog aqui
+  # bloquearia `git merge` legítimo, e falso bloqueio é o que empurra agente para
+  # `--no-verify`.
+  # Via git rev-parse, não file.exists(".git/MERGE_HEAD"): em worktree ou submódulo
+  # o `.git` é um ARQUIVO apontando para o diretório real, e o teste de caminho
+  # falharia silenciosamente — dispensando a trava justamente onde ela deveria valer.
+  #
+  # Chamada direta em vez de git_capture(): ausência de MERGE_HEAD é o caso NORMAL e
+  # devolve status 1, que git_capture reporta como aviso. Usá-lo aqui poluiria a saída
+  # de todo commit comum com um aviso sobre uma condição esperada — e ruído rotineiro
+  # é como se aprende a ignorar a saída do validador inteira.
+  is_merge <- local({
+    out <- suppressWarnings(tryCatch(
+      system2("git", c("rev-parse", "-q", "--verify", "MERGE_HEAD"),
+              stdout = TRUE, stderr = FALSE),
+      error = function(e) character(0)
+    ))
+    status <- attr(out, "status")
+    is.null(status) && length(out) > 0
+  })
+
+  # `git commit --amend` sem nada novo no stage tem index idêntico ao HEAD, então
+  # `staged_files` vem vazio e a trava bloquearia um commit que JÁ contém a entrada
+  # de changelog. Detectar amend de dentro do pre-commit é impossível: a diferença
+  # entre amend e commit vazio é qual commit será o pai do resultado, e o hook roda
+  # antes de isso existir. `diff --cached HEAD^` responderia para amend e daria falso
+  # positivo para --allow-empty; `diff --cached HEAD` faz o inverso.
+  #
+  # Em vez de adivinhar, uma válvula explícita e ESTREITA: GOVERNANCE_AMEND=1 avalia
+  # contra HEAD^. É preferível a `--no-verify` por três razões: nomeia a intenção,
+  # continua rodando todas as outras travas, e fica visível no histórico do shell.
+  is_amend <- nzchar(Sys.getenv("GOVERNANCE_AMEND"))
+  news_changed <- if (is_amend) {
+    "NEWS.md" %in% git_capture(c("diff", "--cached", "--name-only", "HEAD^"))
+  } else {
+    "NEWS.md" %in% staged_files
+  }
+
+  if (is_merge) {
+    cat_info("Merge commit detectado — trava do NEWS.md dispensada.")
+  } else if (!news_changed) {
+    cat_error("Commit BLOQUEADO: 'NEWS.md' não está no Staged Index.")
+    cat_info("Toda mudança rastreada exige entrada no changelog, na mesma transação de commit.")
+    errors_found <- TRUE
+  } else {
+    news_added <- get_staged_added_lines("NEWS.md")
+    news_added <- news_added[nzchar(trimws(news_added))]
+
+    if (is_amend && length(news_added) == 0) {
+      # Amend sem nova linha de changelog: o conteúdo já foi validado quando o
+      # commit original passou pela trava. Revalidar aqui exigiria reescrever o
+      # changelog a cada correção de mensagem de commit.
+      cat_info("Amend declarado — entrada de changelog do commit original preservada.")
+    } else if (length(news_added) == 0) {
+      cat_error("Commit BLOQUEADO: 'NEWS.md' está staged mas não acrescenta nenhuma linha.")
+      errors_found <- TRUE
+    } else {
+      # Uma linha de entrada válida: item de lista com data ISO-8601, opcionalmente
+      # com hora. Cabeçalhos de versão/categoria e prosa de apoio são aceitos sem
+      # exigência de data — só é preciso que ALGUMA linha nova seja uma entrada.
+      # Três formas ACEITAS, porque changelogs reais usam as três: item de lista
+      # datado, cabeçalho de seção, ou prosa acrescentada a uma entrada existente.
+      #
+      # O critério de prosa é volume, não forma. Exigir data ou cabeçalho em toda
+      # adição bloquearia este próprio NEWS.md, que é escrito em parágrafos — erro
+      # cometido e detectado ao tentar commitar esta mudança. A trava existe para
+      # barrar a edição ritual que só satisfaz a regra ("xxxxx"), não para ditar
+      # estilo de redação. Acima de certo volume, prosa e lixo deixam de ser
+      # distinguíveis por regex, e insistir só produziria falso bloqueio.
+      entry_pattern <- "^\\s*[-*]\\s+.*[0-9]{4}-[0-9]{2}-[0-9]{2}"
+      header_pattern <- "^\\s*#{2,3}\\s+"
+      MIN_PROSE_CHARS <- 80
+
+      has_entry <- any(grepl(entry_pattern, news_added))
+      has_header <- any(grepl(header_pattern, news_added))
+      prose_chars <- sum(nchar(news_added))
+
+      if (!has_entry && !has_header && prose_chars < MIN_PROSE_CHARS) {
+        cat_error("Commit BLOQUEADO: as linhas novas do 'NEWS.md' não formam uma entrada de changelog.")
+        cat_info("Esperado um item de lista com data ISO-8601, um cabeçalho de seção,")
+        cat_info(sprintf("ou prosa substantiva (mínimo %d caracteres; recebido %d).",
+                         MIN_PROSE_CHARS, prose_chars))
+        cat_info("Exemplo: - **2026-07-30 15:45** — Descrição da mudança e do porquê.")
+        errors_found <- TRUE
+      }
+
+      # Hash escrito à mão: AVISO, nunca bloqueio (regra em depreciação).
+      #
+      # Gravar o hash do commit dentro do arquivo que o commit versiona é
+      # insatisfazível: o hash é o SHA do conteúdo, então escrevê-lo altera o
+      # conteúdo e o hash. É ponto fixo, não falha de implementação — `--amend` só
+      # produz um hash novo, igualmente não registrado. Na prática rende um commit
+      # `docs(news): backfill do hash` após cada commit real (seis no histórico do
+      # `edupol` em 2026-07-30), e o hash do próprio backfill nunca é registrado.
+      #
+      # Fonte única é o Git: use tools/render-changelog.R para derivar os hashes do
+      # `git log` sob demanda, em vez de armazená-los à mão.
+      if (any(grepl("`?\\[[0-9a-f]{7,40}\\]`?", news_added))) {
+        cat_warn("Entrada nova do NEWS.md contém hash de commit escrito à mão.")
+        cat_info("O hash de um commit não pode constar do próprio commit (ponto fixo).")
+        cat_info("Derive com 'Rscript tools/render-changelog.R' em vez de escrever à mão.")
+      }
+    }
+  }
+}
+
 # ── T4. Integridade de Citações vs. Biblioteca Zotero (.bib) ──────────────────
 # Fonte do caminho do .bib: lida de _quarto.yml (campo "bibliography:"), não
 # hardcodada de novo aqui — o nome do arquivo carrega a data do último export
@@ -1078,8 +1206,14 @@ for (plan_file in names(indexed_plans)) {
       }
 
       if (!found_in_inventory) {
-        cat_error(sprintf("Plano concluído '%s' não possui log de conversa correspondente registrado em llm-reviews/README.md", plan_file))
-        errors_found <- TRUE
+        # AVISO, não bloqueio (rebaixado em 2026-07-30).
+        #
+        # O log de conversa só existe DEPOIS da sessão, e a exportação é um passo
+        # manual à parte. Bloquear o commit por um artefato assíncrono trava trabalho
+        # legítimo por algo que ainda não podia existir — e uma trava que se sabe
+        # injusta é a que ensina o agente a usar `--no-verify`, o que desliga também
+        # as travas legítimas. O sinal continua visível; deixa de ser bloqueante.
+        cat_warn(sprintf("Plano concluído '%s' ainda não tem log de conversa registrado em llm-reviews/README.md", plan_file))
       }
     }
   } else {
