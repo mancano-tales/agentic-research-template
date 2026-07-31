@@ -9,7 +9,11 @@ A pedido do autor. Até aqui os princípios existiam **dispersos** — parte no 
 
 Oito princípios, cada um ancorado na falha que o originou: **policy-as-code** (prosa não é superfície de controle; falso bloqueio é problema de segurança), **transparência** (passo pulado e declarado é aceitável, pulado em silêncio corrompe a auditoria), **reprodutibilidade** (nenhum caminho absoluto; nada específico de projeto dentro de artefato compartilhado; cópia em vez de link), **changelog intelectual**, **Conventional Commits**, **arquivamento dos logs de LLM**, **plano antes de execução** e **uma peça, um dono**.
 
-**A distinção que o documento fixa** — e que vinha sendo confundida: `NEWS.md` é changelog **intelectual** (decisão e raciocínio, escrito à mão, nunca reescrito); o `CHANGELOG` é **derivado** do `git log` por `render-changelog.R`; o Git é a fonte dos hashes. É a formulação positiva do problema do ponto fixo resolvido em 2026-07-30 22:45: o hash não se escreve no arquivo que o commit versiona, mas isso não obriga a abrir mão de um changelog com hashes — obriga a derivá-lo.
+**`CHANGELOG.md` passa a ser gerado e commitado** (decisão do autor, 2026-07-31 09:57). A convenção adotada tem nome — **Keep a Changelog 1.1.0** — e é implementada em dois arquivos com papéis distintos: `NEWS.md` é a fonte **editorial**, escrita à mão, com decisão e raciocínio, sem hashes e nunca reescrita; `CHANGELOG.md` é **derivado** do `git log` por `render-changelog.R`, com hash e timestamp ISO-8601, regenerável e nunca editado à mão.
+
+A decisão resolve uma ambiguidade que vinha desde a issue #1. Ela pedia rastreabilidade fina no formato `- **[a1b2c3d]** 2026-07-30 15:45 — Descrição`, e a rodada de 2026-07-30 22:45 recusou **apenas o hash escrito à mão**, por ser ponto fixo — mas ao parar aí deixou a impressão de que a rastreabilidade tinha sido abandonada. Não tinha: ela só mudou de lugar. Gerando e **versionando** o `CHANGELOG.md`, o artefato que a issue #1 pedia passa a existir, no formato que ela pedia, visível para quem apenas navega o repositório — sem o laço impossível e sem os commits de backfill. Nesta primeira geração, 34 entradas.
+
+O que se perdeu do pedido original é um campo copiado à mão que só podia divergir. O que se ganhou é a mesma informação como projeção de fonte única.
 
 **Escolha de nome de arquivo, a confirmar com o autor**: `PRINCIPLES.md` e não `README.md`, porque o `README.md` deste repositório está redigido como README **do consumidor** (abre em `# [NOME DO SEU PROJETO]`, com placeholders a preencher por quem adota). O mesmo arquivo não consegue ser o README do template e o README que o template entrega. Alternativa, se o autor preferir: promover este documento a `README.md` e renomear o atual para `README.template.md`.
 
@@ -19,7 +23,7 @@ O documento registra também, sem maquiar, uma **questão em aberto**: a `close-
 - **Data/Hora**: 2026-07-31 09:34 (Horário de Brasília)
 - **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
 - **Mensagem do Commit**: "docs(principles): reune os principios do template e sua origem"
-- **Arquivos afetados**: `PRINCIPLES.md`, `README.md`, `NEWS.md`
+- **Arquivos afetados**: `PRINCIPLES.md`, `CHANGELOG.md`, `README.md`, `NEWS.md`
 
 ## 2026-07-30 22:45 — Co-commit do NEWS.md, hook commit-msg e o fim do hash escrito à mão (issue #1)
 

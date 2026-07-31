@@ -37,21 +37,33 @@ O repositório precisa funcionar em outra máquina, com outro usuário, em outro
 - **Nada de específico do projeto dentro de artefato compartilhado.** Skills e scripts leem o que varia da tabela **§ Configuração de Skills** do `AGENTS.md` do consumidor — nunca fixam no texto. O diretório de governança é o exemplo canônico: já oscilou entre `9-vers/`, `0-meta/` e `0-governance/`, e cada edição consertava um repositório e quebrava os outros, porque **o valor não pertence à skill**.
 - **Cópia, não link.** A sincronização entre repositórios é por cópia explícita (`tools/sync-skills.ps1`), nunca por junction ou symlink. Links entre repositórios distintos já se mostraram frágeis sob renomeação de pasta e sincronização de nuvem; cópia funciona em qualquer sistema operacional, sem exigir Developer Mode ou privilégio de administrador — o que importa para um template público. E **nunca há sincronização automática ou silenciosa**: puxar atualização é ato deliberado, com revisão e commit.
 
-## 4. Changelog intelectual
+## 4. Keep a Changelog 1.1.0, com rastreabilidade derivada
 
-O `NEWS.md` é um **changelog intelectual**: registra a decisão e o raciocínio que levou a ela, não a lista de arquivos tocados. Entrada mais recente no topo, **nunca reescrita** — é log histórico, não documentação viva. Quando uma afirmação antiga se revela errada, a correção é uma entrada nova que a contradiz com data; apagar o erro apagaria a própria evidência de que a governança funcionou.
+A convenção adotada é [**Keep a Changelog 1.1.0**](https://keepachangelog.com/): categorias padrão (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`), sem emoji, timestamp ISO-8601 com hora e minuto. As **linhas adicionadas** ao `NEWS.md` são validadas contra o formato pela trava T7 — não apenas a presença do arquivo no stage. Checar presença reduz a regra a ritual: um `NEWS.md` contendo a string `xxxxx` passaria.
 
-Isto o separa de dois artefatos vizinhos, com os quais é frequentemente confundido:
+Ela é implementada em **dois arquivos com papéis distintos**, e confundi-los é o erro mais comum:
 
-| Artefato | O que é | Fonte |
-|---|---|---|
-| `NEWS.md` | changelog **intelectual** — decisões, raciocínio, incidentes | escrito à mão, editorial |
-| `CHANGELOG` | changelog **de código** — o que mudou, por categoria | **derivado** do `git log` por `tools/render-changelog.R` |
-| `git log` | o que aconteceu, com hash e autor | o Git |
+| Artefato | Papel | Hashes | Origem |
+|---|---|---|---|
+| `NEWS.md` | **changelog intelectual** — a decisão e o raciocínio que levou a ela, não a lista de arquivos tocados | não | escrito à mão, editorial |
+| `CHANGELOG.md` | **changelog rastreável** — o que mudou, por categoria, com hash e timestamp | sim | **derivado** do `git log` por `tools/render-changelog.R` |
+| `git log` | o que aconteceu, com hash e autor | sim | o Git |
 
-**Por que derivar em vez de armazenar.** Uma versão anterior desta regra exigia o hash do commit escrito na entrada do changelog. É insatisfazível: o hash é o SHA do conteúdo do commit, então gravá-lo num arquivo que esse mesmo commit versiona altera o conteúdo e, portanto, o hash. É ponto fixo, não falha de implementação — `git commit --amend` só produz um hash novo, igualmente não registrado. Num repositório consumidor onde a regra foi adotada, o resultado foram **seis commits de "backfill do hash" num único dia**, cada um corrigindo o anterior e nenhum registrando o próprio. O `NEWS.md` segue como fonte editorial, sem hashes; o Git segue como fonte dos hashes; o `render-changelog.R` junta os dois.
+O `NEWS.md` tem entrada mais recente no topo e **nunca é reescrito** — é log histórico, não documentação viva. Quando uma afirmação antiga se revela errada, a correção é uma entrada nova que a contradiz com data; apagar o erro apagaria a própria evidência de que a governança funcionou.
 
-O formato das entradas segue [**Keep a Changelog 1.1.0**](https://keepachangelog.com/), e as **linhas adicionadas** são validadas contra ele — não apenas a presença do arquivo no stage. Checar presença reduz a regra a ritual: um `NEWS.md` contendo a string `xxxxx` passaria.
+**Por que o hash é derivado e não escrito à mão.** A formulação original da regra pedia que cada entrada carregasse o hash do commit que a introduziu — `- **[a1b2c3d]** 2026-07-30 15:45 — Descrição`. Isso é insatisfazível em um único commit: o hash é o SHA-1 do **conteúdo** do commit, então gravá-lo num arquivo que esse mesmo commit versiona altera o conteúdo e, portanto, o hash. É problema de ponto fixo, não falha de implementação — `git commit --amend` apenas produz um hash novo, igualmente não registrado, e **nenhum hook pode fechar esse laço**.
+
+Num repositório consumidor onde a regra foi adotada literalmente, o resultado foram **seis commits `docs(news): backfill do hash` num único dia**, cada um corrigindo o anterior e nenhum registrando o próprio. A regra só se sustentava porque era descumprida no último passo.
+
+A causa raiz é de modelagem: **o hash já está no Git**. Copiá-lo à mão para um arquivo rastreado é desnormalização e, como todo dado desnormalizado, só pode divergir. Por isso a dependência é invertida — o `NEWS.md` permanece a fonte editorial sem hashes, e o `CHANGELOG.md` é gerado a partir do `git log`, mapeando tipo de Conventional Commit para categoria do Keep a Changelog:
+
+```bash
+Rscript tools/render-changelog.R --output CHANGELOG.md
+```
+
+O `CHANGELOG.md` **é commitado** — a rastreabilidade fica visível para quem só navega o repositório, sem exigir que ninguém rode nada. Sendo derivado, é regenerado, nunca editado à mão; o validador **avisa** — nunca bloqueia — ao ver hash escrito à mão numa entrada nova do `NEWS.md`.
+
+Nada da rastreabilidade original se perdeu. Ela mudou de lugar: saiu de um campo copiado à mão, que divergia, e passou a ser projeção de uma fonte única.
 
 **Synchronized Commit Policy (co-commit).** Todo commit com mudança de funcionalidade ou documentação inclui a atualização do `NEWS.md` — e o status do plano, quando aplicável — na **mesma transação**. Separar a mudança funcional do registro é exatamente o que produz deriva histórica. A trava roda fora do guarda de "há arquivos no stage", então `--allow-empty` não escapa.
 
@@ -101,7 +113,7 @@ A regra existe porque a alternativa foi testada e falhou. Enquanto duas fontes s
 | Policy-as-code | `tools/validate-governance.R`, `hooks/pre-commit`, `hooks/commit-msg` |
 | Transparência | staging cirúrgico (`AGENTS.md`), `--hook`, `GOVERNANCE_AMEND` |
 | Reprodutibilidade | trava T1, § Configuração de Skills, `tools/sync-skills.*` |
-| Changelog intelectual | `NEWS.md`, `tools/render-changelog.R`, trava T7 |
+| Keep a Changelog 1.1.0 | `NEWS.md` (editorial), `CHANGELOG.md` (derivado), `tools/render-changelog.R`, trava T7 |
 | Conventional Commits | `hooks/commit-msg` |
 | Arquivamento de logs | `tools/export_conversa.R`, `{gov}/llm-reviews/README.md` |
 | Plano antes de execução | `{gov}/plan/`, `{gov}/plan/README.md`, `TODO.md` |
