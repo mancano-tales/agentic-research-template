@@ -3,6 +3,20 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-31 10:43 — Registro de pendência para mapear referências, inspirações e diferenciais do template
+
+A pedido do autor. Adicionada pendência no `TODO.md` para criar uma seção/documento de referência detalhando as origens conceituais, inspirações e diferenciais do template frente a outros projetos e padrões de governança:
+- **Conventional Commits 1.0.0** (`conventional-commits/conventionalcommits.org`)
+- **Keep a Changelog 1.1.0** (`olivierlacan/keep-a-changelog`)
+- **Governança de Agentes de IA (Manoel Galdino)** (`mgaldino`)
+- **Governança de Agentes de IA (Microsoft)** (`microsoft/agent-governance-toolkit`, AutoGen, AI Agent Governance)
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-31 10:43 (Horário de Brasília)
+- **Agente**: Antigravity / Gemini 3.6 Flash / Antigravity CLI
+- **Mensagem do Commit**: "docs(todo): pendencia de mapeamento de referencias e inspiracoes"
+- **Arquivos afetados**: `TODO.md`, `NEWS.md`
+
 ## 2026-07-31 09:57 — `CHANGELOG.md` derivado passa a ser versionado, e a geração vira determinística
 
 **Decisão do autor.** A convenção adotada tem nome — **Keep a Changelog 1.1.0** — e passa a ser implementada em dois arquivos com papéis distintos: `NEWS.md` é a fonte **editorial**, escrita à mão, com decisão e raciocínio, sem hashes e nunca reescrita; `CHANGELOG.md` é **derivado** do `git log` por `render-changelog.R`, com hash e timestamp ISO-8601, regenerável e nunca editado à mão. Primeira geração: 34 entradas.
