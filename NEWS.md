@@ -3,6 +3,28 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-30 22:45 — Co-commit do NEWS.md, hook commit-msg e o fim do hash escrito à mão (issue #1)
+
+Rodada motivada por uma auditoria adversária das travas do consumidor `cem-usp/edupol`, que revelou tanto lacunas deste template quanto uma regra de governança impossível de cumprir.
+
+**T7 — co-commit e formato do NEWS.md.** Absorvido do `edupol`, que tinha a regra e este template não. Vai além do original em dois pontos. Primeiro, o original checava apenas **presença** do arquivo no index: um `NEWS.md` contendo a string `xxxxx` passava, o que reduzia a regra a ritual. Aqui as **linhas adicionadas** são validadas contra o formato Keep a Changelog. Segundo, a trava roda fora do guarda `length(staged_files) > 0`, então `git commit --allow-empty` não escapa mais.
+
+**Contexto de hook agora é declarado, não inferido.** O `hooks/pre-commit` passa `--hook`. O consumidor `edupol` inferia o contexto por `is_git_staged_run <- length(staged_files) > 0`, e um commit vazio produzia lista vazia, fazendo o validador concluir que **não** estava rodando como hook e pular a trava do changelog inteira. Inferir contexto a partir de dados que o usuário controla é a forma errada de detectar contexto.
+
+**O hash do commit no changelog é insatisfazível — regra em depreciação.** A issue #1 pedia entradas no formato `[hash] YYYY-MM-DD HH:MM`. Não dá: o hash é o SHA do conteúdo do commit, então gravá-lo em um arquivo que esse mesmo commit versiona altera o conteúdo e, portanto, o hash. É ponto fixo, não falha de implementação — `git commit --amend` só produz um hash novo, igualmente não registrado. No `edupol`, onde a regra foi adotada, o resultado foram seis commits `docs(news): backfill do hash` em um único dia, cada um corrigindo o anterior, nenhum registrando o próprio.
+
+A saída é derivar em vez de armazenar: **`tools/render-changelog.R`** gera um CHANGELOG anotado a partir do `git log`, mapeando tipos de Conventional Commit para categorias do Keep a Changelog. O `NEWS.md` segue como fonte editorial, sem hashes; o Git segue como fonte dos hashes. O validador **avisa** — nunca bloqueia — ao ver hash escrito à mão numa entrada nova.
+
+**`hooks/commit-msg`.** Valida Conventional Commits 1.0.0. Bloqueia o objetivamente verificável (forma do cabeçalho, tipo fora da lista, mais de 72 caracteres, ponto final, `BREAKING CHANGE:` sem `!`) e **apenas avisa** sobre descrição em gerúndio ou particípio, porque a heurística de sufixo não distingue verbo de substantivo: `estado`, `comando` e `pedido` seriam rejeitados indevidamente. Ignora `Merge`, `Revert`, `fixup!` e `squash!`, que o próprio Git gera.
+
+**Trava de `llm-reviews` rebaixada a aviso.** Exigir log de conversa para plano concluído bloqueava o commit por um artefato que só existe depois da sessão. Uma trava reconhecidamente injusta é a que ensina o agente a usar `--no-verify` — o que desliga junto as travas legítimas. O princípio que orientou toda a rodada: **falso bloqueio é problema de segurança, não de conforto.**
+
+**Válvula `GOVERNANCE_AMEND` para `git commit --amend`.** Encontrada testando a própria trava: um amend sem nada novo no stage tem index idêntico ao HEAD, então `staged_files` vem vazio e a T7 bloqueava um commit que **já continha** a entrada de changelog. Distinguir amend de commit vazio é impossível de dentro do `pre-commit` — a diferença está em qual commit será o pai do resultado, e o hook roda antes disso existir; `diff --cached HEAD^` acerta o amend e erra o `--allow-empty`, e `diff --cached HEAD` faz o inverso. Em vez de adivinhar, `GOVERNANCE_AMEND=1` declara a intenção e avalia contra `HEAD^`. É preferível a `--no-verify` porque nomeia o que está sendo dispensado, mantém todas as outras travas rodando e fica visível no histórico do shell.
+
+**Limites que nenhuma dessas mudanças remove.** `--no-verify` desliga qualquer hook client-side; `core.hooksPath` é configuração local e não viaja no clone; e um hook versionado não se protege contra um commit que o substitua por `exit 0`. Todos os três foram comprovados por teste. Onde a garantia precisa ser real, a mesma validação tem de rodar no CI e ser exigida como status check na proteção de branch.
+
+**Verificação.** Hook `commit-msg` testado contra 20 mensagens; trava T7 contra 5 cenários (sem `NEWS.md`, `--allow-empty`, conteúdo lixo, entrada válida, hash à mão), todos num clone descartável com os hooks ativos. Ausência de `MERGE_HEAD` foi configurada para não emitir aviso no fluxo normal.
+
 ## 2026-07-29 15:36 — Fim dos hard links: AGENTS.md vira o arquivo real e único (WP1 + WP2)
 
 Decisão do autor, executada nesta rodada. O repositório mantinha **três cópias do mesmo texto** — `CLAUDE.md`, `AGENTS.md` e `.github/copilot-instructions.md` — amarradas por hard link e por um self-heal de ~130 linhas no validador. Agora:
