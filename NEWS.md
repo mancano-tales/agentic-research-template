@@ -23,7 +23,7 @@ A saída é derivar em vez de armazenar: **`tools/render-changelog.R`** gera um 
 
 **Limites que nenhuma dessas mudanças remove.** `--no-verify` desliga qualquer hook client-side; `core.hooksPath` é configuração local e não viaja no clone; e um hook versionado não se protege contra um commit que o substitua por `exit 0`. Todos os três foram comprovados por teste. Onde a garantia precisa ser real, a mesma validação tem de rodar no CI e ser exigida como status check na proteção de branch.
 
-**Verificação.** Hook `commit-msg` testado contra 20 mensagens; trava T7 contra 5 cenários (sem `NEWS.md`, `--allow-empty`, conteúdo lixo, entrada válida, hash à mão), todos num clone descartável com os hooks ativos.
+**Verificação.** Hook `commit-msg` testado contra 20 mensagens; trava T7 contra 5 cenários (sem `NEWS.md`, `--allow-empty`, conteúdo lixo, entrada válida, hash à mão), todos num clone descartável com os hooks ativos. Ausência de `MERGE_HEAD` foi configurada para não emitir aviso no fluxo normal.
 
 ## 2026-07-29 15:36 — Fim dos hard links: AGENTS.md vira o arquivo real e único (WP1 + WP2)
 
@@ -299,5 +299,3 @@ Atualização massiva do template para incorporar as últimas travas de seguran�
 - **Agente**: [Nome do Agente] / [Modelo] / [Plataforma] (ex: Antigravity / Gemini 1.5 Pro / Antigravity CLI)
 - **Mensagem do Commit**: "sua mensagem de commit aqui"
 - **Arquivos afetados**: caminho/do/arquivo1, caminho/do/arquivo2
-
-- **2026-07-30 22:55** — Correcao de ruido: ausencia de MERGE_HEAD e o caso normal e nao deve gerar aviso a cada commit; formatacao de render-changelog.R via styler.

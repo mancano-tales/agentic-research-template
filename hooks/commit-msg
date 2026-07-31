@@ -84,7 +84,7 @@ case "$FIRST_WORD" in
     ;;
 esac
 
-# BREAKING CHANGE no rodapé exige o '!' no cabeçalho — e vice-versa.
+# BREAKING CHANGE no rodapé exige o '!' no cabeçalho.
 if grep -qE '^BREAKING[ -]CHANGE:' "$MSG_FILE"; then
   echo "$HEADER" | grep -qE "^(${TYPES})(\([a-z0-9._/-]+\))?!:" \
     || fail "rodapé traz BREAKING CHANGE mas falta o '!' antes dos dois-pontos no cabeçalho."
