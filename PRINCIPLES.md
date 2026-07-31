@@ -52,13 +52,23 @@ A convenção adotada é [**Keep a Changelog 1.1.0**](https://keepachangelog.com
 
 `Deprecated`, `Removed` e `Security` **não são emitidas** porque nenhum tipo de Conventional Commit mapeia para elas sem adivinhação — `revert` não é remoção, e não há tipo para depreciação ou correção de segurança. Inferi-las produziria classificação errada com aparência de precisão. Quando essas categorias importam, o lugar delas é o `NEWS.md`, onde um humano as escolhe deliberadamente.
 
-Ela é implementada em **dois arquivos com papéis distintos**, e confundi-los é o erro mais comum:
+### Três artefatos, três perguntas diferentes
 
-| Artefato | Papel | Hashes | Origem |
-|---|---|---|---|
-| `NEWS.md` | **changelog intelectual** — a decisão e o raciocínio que levou a ela, não a lista de arquivos tocados | não | escrito à mão, editorial |
-| `CHANGELOG.md` | **changelog rastreável** — o que mudou, por categoria, com hash e timestamp | sim | **derivado** do `git log` por `tools/render-changelog.R` |
-| `git log` | o que aconteceu, com hash e autor | sim | o Git |
+Confundi-los é o erro mais comum. Cada um responde a uma pergunta que os outros dois não respondem:
+
+| Artefato | Responde | Curadoria | Hashes | Origem |
+|---|---|---|---|---|
+| **`git log`** | *O que exatamente mudou, quando e por quem?* | nenhuma — registra tudo | sim | o Git |
+| **`CHANGELOG.md`** | *O que mudou que me afeta, agrupado por tipo?* | automática, por categoria | sim | **derivado** do `git log` |
+| **`NEWS.md`** | *Por que mudou? O que se considerou e se descartou?* | humana, editorial | não | escrito à mão |
+
+**O `git log` tem o fato.** Completo e mecânico: um registro por commit, sem hierarquia, incluindo os triviais (`chore`, `style`, correção de digitação). É a fonte de verdade dos hashes e é ilegível como narrativa — ninguém entende um projeto lendo 300 mensagens de commit em ordem.
+
+**O `CHANGELOG.md` tem o fato organizado para o leitor.** É uma **projeção** do `git log`: mesma informação, reagrupada por categoria (`Added`, `Fixed`, `Changed`) para que alguém que *usa* o projeto veja o que mudou sem ler commit por commit. Não acrescenta informação nenhuma — por isso pode ser gerado, e por isso **nunca deve ser editado à mão**. Editá-lo é criar uma segunda verdade que vai divergir da primeira.
+
+**O `NEWS.md` tem a razão.** E a razão **não é derivável de nada**. Nenhuma ferramenta consegue extrair de um diff qual alternativa foi cogitada e rejeitada, qual incidente motivou a mudança, ou qual regra se revelou impossível de cumprir. Um commit `fix(export): sanitiza caminhos absolutos` diz o que foi feito; só o `NEWS.md` diz que aquilo nasceu de um log de conversa reprovado com 108 ocorrências pelo validador do próprio repositório.
+
+A consequência prática: **`git log` e `CHANGELOG.md` se perdem se a ferramenta falhar; o `NEWS.md` se perde se ninguém escrever.** É o único dos três que depende inteiramente de disciplina — e é por isso que o co-commit é uma trava mecânica, não uma recomendação.
 
 O `NEWS.md` tem entrada mais recente no topo e **nunca é reescrito** — é log histórico, não documentação viva. Quando uma afirmação antiga se revela errada, a correção é uma entrada nova que a contradiz com data; apagar o erro apagaria a própria evidência de que a governança funcionou.
 
@@ -82,7 +92,23 @@ Nada da rastreabilidade original se perdeu. Ela mudou de lugar: saiu de um campo
 
 ## 5. Conventional Commits
 
-As mensagens seguem [**Conventional Commits 1.0.0**](https://www.conventionalcommits.org/), validadas por `hooks/commit-msg`. A razão não é cosmética: é o que torna o `CHANGELOG` derivável. `tools/render-changelog.R` mapeia tipo de commit para categoria do Keep a Changelog, e essa tradução só existe porque o tipo é obrigatório e vem de uma lista fechada.
+As mensagens seguem [**Conventional Commits 1.0.0**](https://www.conventionalcommits.org/), validadas por `hooks/commit-msg`.
+
+**A razão não é cosmética — é o que torna o `CHANGELOG.md` derivável.** As duas convenções encaixam uma na outra: o Conventional Commits fornece um **tipo obrigatório vindo de uma lista fechada**, e é exatamente isso que permite traduzir mecanicamente cada commit para uma categoria do Keep a Changelog. Sem tipo obrigatório não há tradução possível, e sem tradução o changelog volta a ser escrito à mão — com todos os problemas de divergência descritos no §4.
+
+A tradução aplicada por `tools/render-changelog.R`:
+
+| Tipo do commit | Categoria do changelog | Significado |
+|---|---|---|
+| `feat` | `Added` | funcionalidade nova |
+| `fix`, `perf` | `Fixed` | defeito ou desempenho corrigido |
+| `refactor`, `style`, `docs`, `build`, `ci`, `chore`, `test`, `revert` | `Changed` | mudou sem alterar o que o projeto entrega |
+| qualquer tipo não reconhecido | `Changed` | fallback conservador |
+| **`!` no cabeçalho** (ex.: `feat(api)!:`) | `Breaking` | quebra compatibilidade — tem seção própria, acima de todas |
+
+O `!` é avaliado **depois** do tipo e sobrepõe-se a ele: um `fix!` aparece em `Breaking`, não em `Fixed`, porque quebrar compatibilidade é a informação que o leitor precisa primeiro.
+
+`Deprecated`, `Removed` e `Security` não são emitidas — ver §4 para o porquê.
 
 O hook bloqueia o objetivamente verificável — forma do cabeçalho, tipo fora da lista, mais de 72 caracteres, ponto final, `BREAKING CHANGE:` sem `!` — e **apenas avisa** sobre descrição em gerúndio ou particípio, porque a heurística de sufixo não distingue verbo de substantivo: `estado`, `comando` e `pedido` seriam rejeitados indevidamente. Ignora `Merge`, `Revert`, `fixup!` e `squash!`, que o próprio Git gera.
 

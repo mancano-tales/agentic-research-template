@@ -3,6 +3,26 @@
 > Entrada mais recente no topo.
 > **Convenção de timestamp**: Todas as datas em cabeçalhos (## YYYY-MM-DD HH:MM) e no campo Data/Hora dos metadados DEVEM incluir hora e minuto no fuso local. Nunca use datas isoladas.
 
+## 2026-07-31 11:13 — Por que Conventional Commits e Keep a Changelog são a mesma decisão
+
+A pedido do autor, documentado no `PRINCIPLES.md` §4/§5 e numa nova Seção 5 do `README.md`.
+
+**As duas convenções não são escolhas independentes — encaixam uma na outra.** O Conventional Commits exige um **tipo vindo de lista fechada** em toda mensagem; é exatamente isso que permite traduzir cada commit mecanicamente para uma categoria do Keep a Changelog. Sem tipo obrigatório não há tradução, e sem tradução o changelog volta a ser escrito à mão — com toda a divergência que o §4 descreve. A tabela de tradução (`feat`→`Added`, `fix`/`perf`→`Fixed`, os demais→`Changed`, `!`→`Breaking` sobrepondo-se ao tipo) passa a estar explícita nos dois documentos, em vez de existir apenas dentro do `render-changelog.R`.
+
+**A distinção entre os três artefatos, que faltava.** Cada um responde a uma pergunta que os outros dois não respondem:
+
+- **`git log`** tem o **fato** — completo, mecânico, um registro por commit, incluindo os triviais. Fonte dos hashes, e ilegível como narrativa.
+- **`CHANGELOG.md`** tem o fato **organizado para o leitor** — uma projeção do `git log`, reagrupada por categoria. Não acrescenta informação; por isso pode ser gerado, e por isso editá-lo à mão cria uma segunda verdade que vai divergir.
+- **`NEWS.md`** tem a **razão** — e a razão não é derivável de nada. Nenhuma ferramenta extrai de um diff qual alternativa foi cogitada e rejeitada, ou qual incidente motivou a mudança. Um commit `fix(export): sanitiza caminhos absolutos` diz o que foi feito; só o `NEWS.md` diz que aquilo nasceu de um log reprovado com 108 ocorrências pelo validador do próprio repositório.
+
+A consequência que justifica a trava: **os dois primeiros se perdem se a ferramenta falhar; o `NEWS.md` se perde se ninguém escrever.** É o único dos três inteiramente dependente de disciplina — e é por isso que o co-commit é mecânico, não recomendação.
+
+**Metadados de Execução**:
+- **Data/Hora**: 2026-07-31 11:13 (Horário de Brasília)
+- **Agente**: Claude Opus 5 / claude-opus-5 / Claude Code (VS Code)
+- **Mensagem do Commit**: "docs(conventions): explica o encaixe entre commits e changelog"
+- **Arquivos afetados**: `PRINCIPLES.md`, `README.md`, `NEWS.md`
+
 ## 2026-07-31 10:43 — Registro de pendência para mapear referências, inspirações e diferenciais do template
 
 A pedido do autor. Adicionada pendência no `TODO.md` para criar uma seção/documento de referência detalhando as origens conceituais, inspirações e diferenciais do template frente a outros projetos e padrões de governança:

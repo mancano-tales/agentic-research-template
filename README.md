@@ -6,7 +6,7 @@ Este repositório adota um **modelo profissional de desenvolvimento cooperativo 
 
 > 📐 **O que você está adotando**: [PRINCIPLES.md](PRINCIPLES.md) reúne os oito princípios deste template — policy-as-code, transparência, reprodutibilidade, Keep a Changelog 1.1.0 com rastreabilidade derivada, Conventional Commits, arquivamento dos logs de LLM, plano antes de execução, e "uma peça, um dono" — com a falha medida que originou cada um. Este README explica *como instalar*; aquele documento explica *o quê* e *por quê*.
 >
-> 📋 **Changelog em dois arquivos**: [NEWS.md](NEWS.md) é a fonte editorial escrita à mão (decisão e raciocínio, sem hashes); [CHANGELOG.md](CHANGELOG.md) é **derivado** do `git log` com hash e timestamp ISO — regenere com `Rscript tools/render-changelog.R --output CHANGELOG.md`, nunca edite à mão.
+> 📋 **Convenções adotadas**: [Conventional Commits 1.0.0](https://www.conventionalcommits.org/) nas mensagens de commit e [Keep a Changelog 1.1.0](https://keepachangelog.com/) no changelog — encaixadas uma na outra, ver Seção 5.
 
 ---
 
@@ -82,4 +82,37 @@ Eles já são ativados automaticamente ao rodar o Setup Rápido (Seção 1). Se 
     ```bash
     git config core.hooksPath hooks
     ```
+
+---
+
+## 5. Convenções de Commit e Changelog
+
+Duas convenções abertas, adotadas porque **encaixam uma na outra**: [Conventional Commits 1.0.0](https://www.conventionalcommits.org/) e [Keep a Changelog 1.1.0](https://keepachangelog.com/). O Conventional Commits exige um **tipo vindo de lista fechada** em cada mensagem, e é isso que permite traduzir cada commit mecanicamente para uma categoria do Keep a Changelog. Sem tipo obrigatório, não há tradução — e o changelog volta a ser escrito à mão.
+
+### Três artefatos, três perguntas
+
+| Artefato | Responde | Curadoria | Editar à mão? |
+|---|---|---|---|
+| `git log` | *O que exatamente mudou, quando, por quem?* | nenhuma — registra tudo | n/a |
+| [CHANGELOG.md](CHANGELOG.md) | *O que mudou que me afeta, por tipo?* | automática | **não** — é derivado |
+| [NEWS.md](NEWS.md) | *Por que mudou? O que se descartou?* | humana, editorial | **sim** — só assim existe |
+
+O `git log` tem o **fato**; o `CHANGELOG.md` tem o fato **organizado para o leitor**; o `NEWS.md` tem a **razão** — e a razão não é derivável de nada. Nenhuma ferramenta extrai de um diff qual alternativa foi rejeitada ou qual incidente motivou a mudança.
+
+### Tradução tipo → categoria
+
+| Tipo do commit | Categoria |
+|---|---|
+| `feat` | `Added` |
+| `fix`, `perf` | `Fixed` |
+| `refactor`, `style`, `docs`, `build`, `ci`, `chore`, `test`, `revert` | `Changed` |
+| `!` no cabeçalho (ex.: `feat(api)!:`) | `Breaking` — sobrepõe-se ao tipo |
+
+Para regenerar o changelog derivado:
+
+```bash
+Rscript tools/render-changelog.R --output CHANGELOG.md
+```
+
+A geração é **determinística**: rodar duas vezes sem mudança no histórico produz arquivos idênticos. O raciocínio completo — por que o hash não é escrito à mão, por que `Deprecated`/`Removed`/`Security` não são emitidas — está em [PRINCIPLES.md](PRINCIPLES.md) §4 e §5.
 
