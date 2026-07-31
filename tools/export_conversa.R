@@ -64,6 +64,37 @@ if (!nzchar(GOV_DIR)) {
 PASTA_SAIDA <- file.path(getwd(), GOV_DIR, "llm-reviews")
 FUSO <- "America/Sao_Paulo"
 
+# ── Saneamento de caminhos absolutos ──────────────────────────────────────────
+# T1 do `validate-governance.R` bloqueia o commit de qualquer arquivo que
+# introduza caminho absoluto local (ABS_PATH_REGEX: "C:/Users/", "/home/",
+# "/Users/") ou a substring "MancanoSync/". Uma transcricao de sessao esta cheia
+# dos dois: o cabecalho traz o caminho do .jsonl de origem, e as chamadas de
+# ferramenta citam caminhos do repositorio a cada comando executado.
+#
+# Sem este saneamento, TODO export cai no proprio validador do ecossistema e a
+# cerimonia `close-task` trava no ultimo passo — duas ferramentas do mesmo
+# template em conflito direto. Observado em 2026-07-30 no repo `edupol`: 108
+# ocorrencias num unico log, exigindo saneamento manual antes do commit.
+RAIZ_REPO <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)
+DIR_USUARIO <- normalizePath(
+  Sys.getenv("USERPROFILE", unset = path.expand("~")),
+  winslash = "/", mustWork = FALSE
+)
+
+# Aceita as tres grafias que aparecem na pratica: "C:/x", "C:\x" e "/c/x" (Git
+# Bash), com a letra da unidade em qualquer caixa.
+padrao_de_caminho <- function(caminho) {
+  p <- gsub("^([A-Za-z]):", "(?:\1:|/\1)", caminho)
+  gsub("/", "[/\\\\]", p)
+}
+
+sanitizar_caminhos <- function(x) {
+  if (!length(x)) return(x)
+  x <- gsub(padrao_de_caminho(RAIZ_REPO), "<repo>", x, perl = TRUE, ignore.case = TRUE)
+  x <- gsub(padrao_de_caminho(DIR_USUARIO), "<HOME>", x, perl = TRUE, ignore.case = TRUE)
+  x
+}
+
 # ── Argumentos ────────────────────────────────────────────────────────────────
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) {
@@ -307,7 +338,7 @@ if (is_antigravity) {
     paste0("# Conversa com Antigravity — ", if (!is.na(ai_title)) ai_title else slug),
     "",
     paste0("> **Sessão**: `", uuid_sessao, "`  "),
-    paste0("> **Fonte**: `", normalizePath(arquivo_jsonl, winslash = "/"), "`  "),
+    paste0("> **Fonte**: `", sanitizar_caminhos(normalizePath(arquivo_jsonl, winslash = "/")), "`  "),
     paste0(
       "> **Início**: ", fmt_local(ts_ini), " — **Fim**: ", fmt_local(ts_fim),
       " (", FUSO, "; duração ", round(as.numeric(dur), 1), " h)  "
@@ -367,7 +398,7 @@ if (is_antigravity) {
     paste0("# Conversa com Claude — ", if (!is.na(ai_title)) ai_title else slug),
     "",
     paste0("> **Sessão**: `", uuid_sessao, "`  "),
-    paste0("> **Fonte**: `", normalizePath(arquivo_jsonl, winslash = "/"), "`  "),
+    paste0("> **Fonte**: `", sanitizar_caminhos(normalizePath(arquivo_jsonl, winslash = "/")), "`  "),
     paste0(
       "> **Início**: ", fmt_local(ts_ini), " — **Fim**: ", fmt_local(ts_fim),
       " (", FUSO, "; duração ", round(as.numeric(dur), 1), " h)  "
@@ -468,7 +499,7 @@ while (file.exists(arquivo_saida)) {
 }
 
 con <- file(arquivo_saida, open = "w", encoding = "UTF-8")
-writeLines(unlist(buf$linhas, use.names = FALSE), con)
+writeLines(sanitizar_caminhos(unlist(buf$linhas, use.names = FALSE)), con)
 close(con)
 
 cat("✅ Conversa exportada:", normalizePath(arquivo_saida, winslash = "/"), "\n")
